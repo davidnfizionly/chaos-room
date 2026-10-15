@@ -1,0 +1,54 @@
+# Simulator run: baseline telemetry, sabotage and reset commands sent with aws iot-data publish
+# Commands: aws iot-data publish --topic chaos-room/cmd/cooling --payload '{"action":"sabotage"}' then '{"action":"reset"}'
+
+> chaos-room-simulator@1.0.0 start
+> IOT_ENDPOINT=$(aws iot describe-endpoint --endpoint-type iot:Data-ATS --query endpointAddress --output text) node index.mjs
+
+2026-10-15T13:18:41.416Z [alarm] connected as chaos-room-alarm-system
+2026-10-15T13:18:41.427Z [cooling] connected as chaos-room-cooling-unit
+2026-10-15T13:18:41.494Z [power] connected as chaos-room-power-bus
+2026-10-15T13:18:41.652Z [alarm] subscribed to chaos-room/cmd/alarm
+2026-10-15T13:18:41.674Z [cooling] subscribed to chaos-room/cmd/cooling
+2026-10-15T13:18:41.759Z [power] subscribed to chaos-room/cmd/power
+2026-10-15T13:18:50.648Z [cooling] 10 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":10,"ts":1792070330648,"temp_c":22.19,"coolant_flow_lpm":39.73,"pump_rpm":1448}
+2026-10-15T13:18:50.650Z [power] 10 published, last: {"component":"power","device":"chaos-room-power-bus","seq":10,"ts":1792070330649,"voltage_v":230.77,"load_pct":57,"frequency_hz":49.992}
+2026-10-15T13:18:50.650Z [alarm] 10 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":10,"ts":1792070330650,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:00.660Z [cooling] 20 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":20,"ts":1792070340660,"temp_c":22.25,"coolant_flow_lpm":40.4,"pump_rpm":1444}
+2026-10-15T13:19:00.661Z [power] 20 published, last: {"component":"power","device":"chaos-room-power-bus","seq":20,"ts":1792070340661,"voltage_v":230.48,"load_pct":56.01,"frequency_hz":49.991}
+2026-10-15T13:19:00.661Z [alarm] 20 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":20,"ts":1792070340661,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:10.671Z [cooling] 30 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":30,"ts":1792070350670,"temp_c":21.65,"coolant_flow_lpm":40.2,"pump_rpm":1450}
+2026-10-15T13:19:10.672Z [power] 30 published, last: {"component":"power","device":"chaos-room-power-bus","seq":30,"ts":1792070350672,"voltage_v":230.72,"load_pct":57.44,"frequency_hz":49.994}
+2026-10-15T13:19:10.673Z [alarm] 30 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":30,"ts":1792070350672,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:14.032Z [cooling] SABOTAGE overheat -> {"component":"cooling","device":"chaos-room-cooling-unit","seq":34,"ts":1792070354032,"temp_c":92.09,"coolant_flow_lpm":6.52,"pump_rpm":1456}
+2026-10-15T13:19:19.679Z [cooling] 40 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":40,"ts":1792070359679,"temp_c":90.51,"coolant_flow_lpm":5.9,"pump_rpm":1444}
+2026-10-15T13:19:20.680Z [power] 40 published, last: {"component":"power","device":"chaos-room-power-bus","seq":40,"ts":1792070360680,"voltage_v":230.88,"load_pct":56.16,"frequency_hz":50.004}
+2026-10-15T13:19:20.680Z [alarm] 40 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":40,"ts":1792070360680,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:21.973Z [cooling] RESET -> {"component":"cooling","device":"chaos-room-cooling-unit","seq":43,"ts":1792070361973,"temp_c":22.11,"coolant_flow_lpm":39.65,"pump_rpm":1459}
+2026-10-15T13:19:23.825Z [alarm] ignored sabotage: no fault "undefined" for this component
+2026-10-15T13:19:28.690Z [cooling] 50 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":50,"ts":1792070368690,"temp_c":21.93,"coolant_flow_lpm":39.37,"pump_rpm":1443}
+2026-10-15T13:19:30.692Z [power] 50 published, last: {"component":"power","device":"chaos-room-power-bus","seq":50,"ts":1792070370692,"voltage_v":230.54,"load_pct":55.41,"frequency_hz":50.018}
+2026-10-15T13:19:30.692Z [alarm] 50 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":50,"ts":1792070370692,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:38.706Z [cooling] 60 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":60,"ts":1792070378706,"temp_c":22.24,"coolant_flow_lpm":39.39,"pump_rpm":1445}
+2026-10-15T13:19:40.710Z [power] 60 published, last: {"component":"power","device":"chaos-room-power-bus","seq":60,"ts":1792070380710,"voltage_v":230.73,"load_pct":57.17,"frequency_hz":50.012}
+2026-10-15T13:19:40.711Z [alarm] 60 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":60,"ts":1792070380711,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:48.580Z [cooling] connection closed
+2026-10-15T13:19:50.583Z [cooling] reconnecting
+2026-10-15T13:19:50.720Z [power] 70 published, last: {"component":"power","device":"chaos-room-power-bus","seq":70,"ts":1792070390720,"voltage_v":229.61,"load_pct":56.22,"frequency_hz":49.994}
+2026-10-15T13:19:50.721Z [alarm] 70 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":70,"ts":1792070390721,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:19:51.376Z [cooling] connected as chaos-room-cooling-unit
+2026-10-15T13:19:51.376Z [cooling] subscribed to chaos-room/cmd/cooling
+2026-10-15T13:19:51.721Z [cooling] 70 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":70,"ts":1792070391721,"temp_c":22.12,"coolant_flow_lpm":40.43,"pump_rpm":1444}
+2026-10-15T13:20:00.733Z [power] 80 published, last: {"component":"power","device":"chaos-room-power-bus","seq":80,"ts":1792070400732,"voltage_v":229.49,"load_pct":52.99,"frequency_hz":49.997}
+2026-10-15T13:20:00.733Z [alarm] 80 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":80,"ts":1792070400733,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:20:01.733Z [cooling] 80 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":80,"ts":1792070401732,"temp_c":21.62,"coolant_flow_lpm":39.48,"pump_rpm":1452}
+2026-10-15T13:20:07.289Z [cooling] connection closed
+2026-10-15T13:20:09.290Z [cooling] reconnecting
+2026-10-15T13:20:10.120Z [cooling] connected as chaos-room-cooling-unit
+2026-10-15T13:20:10.120Z [cooling] subscribed to chaos-room/cmd/cooling
+2026-10-15T13:20:10.743Z [power] 90 published, last: {"component":"power","device":"chaos-room-power-bus","seq":90,"ts":1792070410743,"voltage_v":229.22,"load_pct":52.44,"frequency_hz":50.001}
+2026-10-15T13:20:10.744Z [alarm] 90 published, last: {"component":"alarm","device":"chaos-room-alarm-system","seq":90,"ts":1792070410744,"armed":true,"siren":"off","lockdown":false,"panel_ok":true,"battery_pct":98}
+2026-10-15T13:20:14.747Z [cooling] 90 published, last: {"component":"cooling","device":"chaos-room-cooling-unit","seq":90,"ts":1792070414747,"temp_c":21.97,"coolant_flow_lpm":40.1,"pump_rpm":1445}
+SIGTERM received, disconnecting
+2026-10-15T13:20:17.789Z [alarm] connection closed
+2026-10-15T13:20:17.805Z [cooling] connection closed
+2026-10-15T13:20:17.825Z [power] connection closed

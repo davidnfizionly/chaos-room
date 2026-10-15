@@ -1,0 +1,41 @@
+## aws iot list-things
+chaos-room-cooling-unit	cooling
+chaos-room-alarm-system	alarm
+chaos-room-power-bus	power
+## aws iot list-targets-for-policy --policy-name chaos-room-device (certificate count)
+3
+## aws iot get-policy --policy-name chaos-room-device
+{
+  "Statement": [
+    {
+      "Action": "iot:Connect",
+      "Condition": {
+        "Bool": {
+          "iot:Connection.Thing.IsAttached": "true"
+        }
+      },
+      "Effect": "Allow",
+      "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:client/${iot:Connection.Thing.ThingName}",
+      "Sid": "ConnectAsOwnThingOnly"
+    },
+    {
+      "Action": "iot:Publish",
+      "Effect": "Allow",
+      "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/telemetry/${iot:Connection.Thing.Attributes[component]}",
+      "Sid": "PublishOwnTelemetry"
+    },
+    {
+      "Action": "iot:Subscribe",
+      "Effect": "Allow",
+      "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topicfilter/chaos-room/cmd/${iot:Connection.Thing.Attributes[component]}",
+      "Sid": "SubscribeOwnCommands"
+    },
+    {
+      "Action": "iot:Receive",
+      "Effect": "Allow",
+      "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/cmd/${iot:Connection.Thing.Attributes[component]}",
+      "Sid": "ReceiveOwnCommands"
+    }
+  ],
+  "Version": "2012-10-17"
+}

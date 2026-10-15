@@ -1,0 +1,14 @@
+{
+  "name": "chaos-room-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulated control room devices publishing telemetry to AWS IoT Core over MQTT (mTLS)",
+  "type": "module",
+  "scripts": {
+    "gen-keys": "bash gen-keys.sh",
+    "start": "IOT_ENDPOINT=$(aws iot describe-endpoint --endpoint-type iot:Data-ATS --query endpointAddress --output text) node index.mjs"
+  },
+  "dependencies": {
+    "mqtt": "5.16.1"
+  }
+}

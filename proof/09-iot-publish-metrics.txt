@@ -1,0 +1,12 @@
+# CloudWatch AWS/IoT PublishIn.Success (MQTT), 1-minute sums, times in UTC+3
+# Run 1: 13:18:41-13:20:17 UTC (sabotage/reset tests + policy tests). Run 2: from 13:21:07 UTC, untouched.
+# Expected for a full minute: 3 devices x 60 messages = 180
+# Command: aws cloudwatch get-metric-statistics --namespace AWS/IoT --metric-name PublishIn.Success --dimensions Name=Protocol,Value=MQTT --period 60 --statistics Sum
+2026-10-15T16:18:00+03:00	57.0
+2026-10-15T16:19:00+03:00	180.0
+2026-10-15T16:20:00+03:00	50.0
+2026-10-15T16:21:00+03:00	159.0
+2026-10-15T16:22:00+03:00	180.0
+2026-10-15T16:23:00+03:00	180.0
+2026-10-15T16:24:00+03:00	120.0
+# Note: 16:20 is the partial minute when run 1 stopped; 16:24 was still being aggregated when queried. At first query, 16:19 showed 120; re-queried 6 minutes later it showed 180 (CloudWatch late aggregation, see docs/DEVLOG.md).

@@ -1,0 +1,274 @@
+data.aws_caller_identity.current: Reading...
+data.aws_iot_endpoint.data_ats: Reading...
+data.aws_caller_identity.current: Read complete after 0s [id=<ACCOUNT_ID>]
+data.aws_iot_endpoint.data_ats: Read complete after 1s [id=<IOT_ENDPOINT_ID>-ats.iot.us-east-1.amazonaws.com]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_iot_certificate.device["alarm"] will be created
+  + resource "aws_iot_certificate" "device" {
+      + active            = true
+      + arn               = (known after apply)
+      + ca_certificate_id = (known after apply)
+      + certificate_pem   = (sensitive value)
+      + csr               = <<-EOT
+            -----BEGIN CERTIFICATE REQUEST-----
+            MIHVMH0CAQAwGzEZMBcGA1UEAwwQY2hhb3Mtcm9vbS1hbGFybTBZMBMGByqGSM49
+            AgEGCCqGSM49AwEHA0IABB1arer97EIh8X/QVPlaBqdTFpZj44fUeJcXiqFoDQoE
+            E1DbOsVFLKOUxV/lhTFRPMhF+r9F+R1+HIkGIznrGWygADAKBggqhkjOPQQDAgNI
+            ADBFAiEAkoph5xdVzik5qC3DQuTAMCX0UhQqeS/oJ0H7IBge9nwCIFw49b+iHTQF
+            JtaToyjh4Pdm7id81HP4tqeVB73ZTAip
+            -----END CERTIFICATE REQUEST-----
+        EOT
+      + id                = (known after apply)
+      + private_key       = (sensitive value)
+      + public_key        = (sensitive value)
+      + region            = "us-east-1"
+    }
+
+  # aws_iot_certificate.device["cooling"] will be created
+  + resource "aws_iot_certificate" "device" {
+      + active            = true
+      + arn               = (known after apply)
+      + ca_certificate_id = (known after apply)
+      + certificate_pem   = (sensitive value)
+      + csr               = <<-EOT
+            -----BEGIN CERTIFICATE REQUEST-----
+            MIHXMH8CAQAwHTEbMBkGA1UEAwwSY2hhb3Mtcm9vbS1jb29saW5nMFkwEwYHKoZI
+            zj0CAQYIKoZIzj0DAQcDQgAE2CCHUn33WM0h6o40m6AmwED3mkQRxu/UMo4q/WoI
+            nHjpxVc+x+ESjhO/zrCtNLpAGYyma+xpTwByQYY2KQzLVqAAMAoGCCqGSM49BAMC
+            A0gAMEUCIQCMyqlodOO5cmL8OzyAem5982ymcL7UDArWdQwXkyXwhgIgPW9w0wms
+            7AdLEe+whfge7xOsut3GQqp91D/ewxCVD/E=
+            -----END CERTIFICATE REQUEST-----
+        EOT
+      + id                = (known after apply)
+      + private_key       = (sensitive value)
+      + public_key        = (sensitive value)
+      + region            = "us-east-1"
+    }
+
+  # aws_iot_certificate.device["power"] will be created
+  + resource "aws_iot_certificate" "device" {
+      + active            = true
+      + arn               = (known after apply)
+      + ca_certificate_id = (known after apply)
+      + certificate_pem   = (sensitive value)
+      + csr               = <<-EOT
+            -----BEGIN CERTIFICATE REQUEST-----
+            MIHVMH0CAQAwGzEZMBcGA1UEAwwQY2hhb3Mtcm9vbS1wb3dlcjBZMBMGByqGSM49
+            AgEGCCqGSM49AwEHA0IABPjJaRV/Or8plWyaMY4JKBYyUmHM3E5ef4Bd/GkPd/kQ
+            wYS7Uv/dlQD9/lPxLdrQhc+cemgnQX1qdCWB50Besk2gADAKBggqhkjOPQQDAgNI
+            ADBFAiBLaC4TgvuLgw3qdA8C1tVOCHUd6ynYBeE7g6iBsrPLZAIhAP7yKXwCFkh6
+            JUalcwe7HcJNthoqOVYegRcaYAjHKGjG
+            -----END CERTIFICATE REQUEST-----
+        EOT
+      + id                = (known after apply)
+      + private_key       = (sensitive value)
+      + public_key        = (sensitive value)
+      + region            = "us-east-1"
+    }
+
+  # aws_iot_policy.device will be created
+  + resource "aws_iot_policy" "device" {
+      + arn                = (known after apply)
+      + default_version_id = (known after apply)
+      + id                 = (known after apply)
+      + name               = "chaos-room-device"
+      + policy             = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "iot:Connect"
+                      + Condition = {
+                          + Bool = {
+                              + "iot:Connection.Thing.IsAttached" = "true"
+                            }
+                        }
+                      + Effect    = "Allow"
+                      + Resource  = "arn:aws:iot:us-east-1:<ACCOUNT_ID>:client/${iot:Connection.Thing.ThingName}"
+                      + Sid       = "ConnectAsOwnThingOnly"
+                    },
+                  + {
+                      + Action   = "iot:Publish"
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/telemetry/${iot:Connection.Thing.Attributes[component]}"
+                      + Sid      = "PublishOwnTelemetry"
+                    },
+                  + {
+                      + Action   = "iot:Subscribe"
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topicfilter/chaos-room/cmd/${iot:Connection.Thing.Attributes[component]}"
+                      + Sid      = "SubscribeOwnCommands"
+                    },
+                  + {
+                      + Action   = "iot:Receive"
+                      + Effect   = "Allow"
+                      + Resource = "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/cmd/${iot:Connection.Thing.Attributes[component]}"
+                      + Sid      = "ReceiveOwnCommands"
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + region             = "us-east-1"
+      + tags_all           = {
+          + "Project" = "chaos-room"
+        }
+    }
+
+  # aws_iot_policy_attachment.device["alarm"] will be created
+  + resource "aws_iot_policy_attachment" "device" {
+      + id     = (known after apply)
+      + policy = "chaos-room-device"
+      + region = "us-east-1"
+      + target = (known after apply)
+    }
+
+  # aws_iot_policy_attachment.device["cooling"] will be created
+  + resource "aws_iot_policy_attachment" "device" {
+      + id     = (known after apply)
+      + policy = "chaos-room-device"
+      + region = "us-east-1"
+      + target = (known after apply)
+    }
+
+  # aws_iot_policy_attachment.device["power"] will be created
+  + resource "aws_iot_policy_attachment" "device" {
+      + id     = (known after apply)
+      + policy = "chaos-room-device"
+      + region = "us-east-1"
+      + target = (known after apply)
+    }
+
+  # aws_iot_thing.device["alarm"] will be created
+  + resource "aws_iot_thing" "device" {
+      + arn               = (known after apply)
+      + attributes        = {
+          + "component" = "alarm"
+        }
+      + default_client_id = (known after apply)
+      + id                = (known after apply)
+      + name              = "chaos-room-alarm-system"
+      + region            = "us-east-1"
+      + version           = (known after apply)
+    }
+
+  # aws_iot_thing.device["cooling"] will be created
+  + resource "aws_iot_thing" "device" {
+      + arn               = (known after apply)
+      + attributes        = {
+          + "component" = "cooling"
+        }
+      + default_client_id = (known after apply)
+      + id                = (known after apply)
+      + name              = "chaos-room-cooling-unit"
+      + region            = "us-east-1"
+      + version           = (known after apply)
+    }
+
+  # aws_iot_thing.device["power"] will be created
+  + resource "aws_iot_thing" "device" {
+      + arn               = (known after apply)
+      + attributes        = {
+          + "component" = "power"
+        }
+      + default_client_id = (known after apply)
+      + id                = (known after apply)
+      + name              = "chaos-room-power-bus"
+      + region            = "us-east-1"
+      + version           = (known after apply)
+    }
+
+  # aws_iot_thing_principal_attachment.device["alarm"] will be created
+  + resource "aws_iot_thing_principal_attachment" "device" {
+      + id                   = (known after apply)
+      + principal            = (known after apply)
+      + region               = "us-east-1"
+      + thing                = "chaos-room-alarm-system"
+      + thing_principal_type = (known after apply)
+    }
+
+  # aws_iot_thing_principal_attachment.device["cooling"] will be created
+  + resource "aws_iot_thing_principal_attachment" "device" {
+      + id                   = (known after apply)
+      + principal            = (known after apply)
+      + region               = "us-east-1"
+      + thing                = "chaos-room-cooling-unit"
+      + thing_principal_type = (known after apply)
+    }
+
+  # aws_iot_thing_principal_attachment.device["power"] will be created
+  + resource "aws_iot_thing_principal_attachment" "device" {
+      + id                   = (known after apply)
+      + principal            = (known after apply)
+      + region               = "us-east-1"
+      + thing                = "chaos-room-power-bus"
+      + thing_principal_type = (known after apply)
+    }
+
+  # local_file.device_cert["alarm"] will be created
+  + resource "local_file" "device_cert" {
+      + content              = (sensitive value)
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0644"
+      + filename             = "./../../simulator/certs/alarm.cert.pem"
+      + id                   = (known after apply)
+    }
+
+  # local_file.device_cert["cooling"] will be created
+  + resource "local_file" "device_cert" {
+      + content              = (sensitive value)
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0644"
+      + filename             = "./../../simulator/certs/cooling.cert.pem"
+      + id                   = (known after apply)
+    }
+
+  # local_file.device_cert["power"] will be created
+  + resource "local_file" "device_cert" {
+      + content              = (sensitive value)
+      + content_base64sha256 = (known after apply)
+      + content_base64sha512 = (known after apply)
+      + content_md5          = (known after apply)
+      + content_sha1         = (known after apply)
+      + content_sha256       = (known after apply)
+      + content_sha512       = (known after apply)
+      + directory_permission = "0777"
+      + file_permission      = "0644"
+      + filename             = "./../../simulator/certs/power.cert.pem"
+      + id                   = (known after apply)
+    }
+
+Plan: 16 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + iot_endpoint = "<IOT_ENDPOINT_ID>-ats.iot.us-east-1.amazonaws.com"
+  + things       = {
+      + alarm   = "chaos-room-alarm-system"
+      + cooling = "chaos-room-cooling-unit"
+      + power   = "chaos-room-power-bus"
+    }
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
+Releasing state lock. This may take a few moments...

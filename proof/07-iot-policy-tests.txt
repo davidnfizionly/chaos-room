@@ -1,0 +1,6 @@
+# IoT policy tests (simulator stopped first, see docs/DEVLOG.md). Command: IOT_ENDPOINT=... node simulator/policy-test.mjs
+PASS | own identity, own topic | clientId=chaos-room-cooling-unit topic=chaos-room/telemetry/cooling | publish accepted
+PASS | own identity, other device topic | clientId=chaos-room-cooling-unit topic=chaos-room/telemetry/power | publish rejected (connection closed by broker)
+PASS | impersonate other thing | clientId=chaos-room-power-bus topic=chaos-room/telemetry/power | connect refused (connection closed by broker)
+PASS | publish on command topic | clientId=chaos-room-cooling-unit topic=chaos-room/cmd/cooling | publish rejected (connection closed by broker)
+ALL PASS
