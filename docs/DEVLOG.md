@@ -58,7 +58,7 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 
 ### The fix was faster than the dashboard could show it
 
-- **What happened:** in the browser test, a cooling sabotage was remediated 265 ms after the fault reached AWS. With a 1 s poll, the tile went Healthy -> Healthy: a viewer never saw the fault at all. Another run showed the power tile flash `FAULT` right after `Fixing...`.
+- **What happened:** in the browser test, a cooling sabotage was remediated 265 ms after the fault reached AWS. With a 1 s poll, the tile went from Healthy to Healthy: a viewer never saw the fault at all. Another run showed the power tile flash `FAULT` right after `Fixing...`.
 - **Root cause:** the poll period is longer than the whole incident. The `FAULT` flash came from the faulty reading mirrored just after the lock was released, i.e. inside the settle window (same root cause as the duplicate incidents in Phase 3).
 - **Fix:** a resolved incident stays on its tile for 8 s ("Fault detected and fixed in N ms"), a status message rather than an animation; and a faulty reading inside the settle window is shown as `Fixing...`, not `FAULT`.
 
@@ -84,7 +84,7 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 
 ### Concurrent incidents did not always overlap in time
 
-- **What happened:** in 2 of the 20 concurrent runs, the two Step Functions executions did not overlap (-12 ms and -25 ms). The first estimate, from the incident log's DETECTED -> RESOLVED windows, said 3/20; the execution history (ExecutionStarted -> ExecutionSucceeded) is the accurate measure.
+- **What happened:** in 2 of the 20 concurrent runs, the two Step Functions executions did not overlap (-12 ms and -25 ms). The first estimate, from the incident log's DETECTED to RESOLVED windows, said 3/20; the execution history (ExecutionStarted to ExecutionSucceeded) is the accurate measure.
 - **Root cause:** the two sabotage commands are two separate MQTT publishes travelling from Nairobi; in those runs they arrived 146 ms and 156 ms apart, while a warm execution only lasts about 100-160 ms. The first was finished before the second started.
 - **Fix:** none in the system: each incident still had its own execution, its own lock, and exactly one incident, with no interference. Reported as measured: 18/20 runs overlapped, median overlap 85 ms.
 
@@ -100,3 +100,11 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 
 - **What happened:** the screen-recorded GIF predated the 437/172 correction (file dated 20:09, fix at 20:13) and still showed 445/173; a re-recording never reached the project folder.
 - **Fix:** `diagram/architecture.gif` is rendered from `diagram/index.html?record=1&scenario=sabotage` in headless Chromium (Playwright), frame by frame with real timings, and encoded with `gifenc` (tools kept outside the repo): 1200x729, 102 frames, 18.8 s, 6.9 MB, cropped above the legend line. It is a browser render of the diagram, not a screen recording.
+
+## Phase 7
+
+### The budget alert e-mail was never confirmed
+
+- **What happened:** the budget page captured before teardown (`proof/screenshots/01-budget-credits-excluded.png`) showed "Email verification: 0/1 email verified" for the alert subscriber, although Terraform had created the budget and its three notifications without error and `describe-budget` confirmed the cost settings.
+- **Root cause:** the subscriber has to confirm the subscription e-mail before alerts are delivered, and nobody checked that inbox during the build. Terraform reporting success does not prove the alert path works end to end.
+- **Fix:** none possible after teardown. Spend stayed at 0.00 USD of 5.00 USD on the budget page, but for the next project the confirmation e-mail is checked right after the budget is created, and the alert is treated as working only once the console shows the address as verified.

@@ -1,0 +1,82 @@
+# Phase 7 teardown, 15 Oct 2026
+# Step 1: infra/stack, terraform plan -destroy then terraform apply destroy.tfplan
+Plan: 0 to add, 0 to change, 67 to destroy.
+local_sensitive_file.dashboard_env: Destruction complete after 0s
+local_file.device_cert["cooling"]: Destruction complete after 0s
+local_file.device_cert["power"]: Destruction complete after 0s
+local_file.device_cert["alarm"]: Destruction complete after 0s
+aws_iot_thing_principal_attachment.device["alarm"]: Destruction complete after 1s
+aws_iot_thing_principal_attachment.device["power"]: Destruction complete after 1s
+aws_iot_thing_principal_attachment.device["cooling"]: Destruction complete after 1s
+aws_iot_policy_attachment.device["power"]: Destruction complete after 1s
+aws_apigatewayv2_route.api["POST /reset"]: Destruction complete after 1s
+aws_apigatewayv2_route.api["GET /state"]: Destruction complete after 1s
+aws_apigatewayv2_route.api["POST /sabotage"]: Destruction complete after 1s
+aws_iot_topic_rule.fault["power"]: Destruction complete after 1s
+aws_iot_topic_rule.fault["cooling"]: Destruction complete after 1s
+aws_iot_topic_rule.live_state: Destruction complete after 1s
+aws_iot_policy_attachment.device["alarm"]: Destruction complete after 0s
+aws_iot_policy_attachment.device["cooling"]: Destruction complete after 0s
+aws_iot_thing.device["alarm"]: Destruction complete after 0s
+aws_iot_thing.device["power"]: Destruction complete after 0s
+aws_iot_thing.device["cooling"]: Destruction complete after 0s
+aws_apigatewayv2_stage.default: Destruction complete after 0s
+aws_apigatewayv2_integration.api["api_command"]: Destruction complete after 0s
+aws_apigatewayv2_integration.api["api_state"]: Destruction complete after 0s
+aws_iot_policy.device: Destruction complete after 1s
+aws_iot_certificate.device["alarm"]: Destruction complete after 1s
+aws_iot_certificate.device["power"]: Destruction complete after 1s
+aws_iot_certificate.device["cooling"]: Destruction complete after 1s
+aws_lambda_permission.api["api_command"]: Destruction complete after 1s
+aws_lambda_permission.api["api_state"]: Destruction complete after 1s
+aws_iam_role_policy.iot_rules: Destruction complete after 1s
+aws_apigatewayv2_api.dashboard: Destruction complete after 0s
+aws_iam_role.iot_rules: Destruction complete after 1s
+aws_cloudwatch_log_group.rule_errors: Destruction complete after 1s
+aws_lambda_function.api["api_command"]: Destruction complete after 6s
+aws_lambda_function.api["api_state"]: Destruction complete after 6s
+random_password.api_key: Destruction complete after 0s
+aws_iam_role_policy.api["api_command"]: Destruction complete after 0s
+aws_iam_role_policy.api["api_state"]: Destruction complete after 0s
+aws_cloudwatch_log_group.api["api_state"]: Destruction complete after 1s
+aws_cloudwatch_log_group.api["api_command"]: Destruction complete after 1s
+aws_iam_role.api["api_command"]: Destruction complete after 1s
+aws_iam_role.api["api_state"]: Destruction complete after 1s
+aws_sfn_state_machine.remediation["power"]: Destruction complete after 36s
+aws_sfn_state_machine.remediation["cooling"]: Destruction complete after 57s
+aws_iam_role_policy.workflow["power"]: Destruction complete after 0s
+aws_iam_role_policy.workflow["cooling"]: Destruction complete after 0s
+aws_cloudwatch_log_group.workflow["power"]: Destruction complete after 1s
+aws_iam_role.workflow["cooling"]: Destruction complete after 2s
+aws_cloudwatch_log_group.workflow["cooling"]: Destruction complete after 2s
+aws_iam_role.workflow["power"]: Destruction complete after 2s
+aws_lambda_function.action["lockdown"]: Destruction complete after 6s
+aws_lambda_function.action["reroute_power"]: Destruction complete after 6s
+aws_lambda_function.action["raise_alarm"]: Destruction complete after 6s
+aws_lambda_function.action["close_valve"]: Destruction complete after 6s
+aws_iam_role_policy.action["raise_alarm"]: Destruction complete after 0s
+aws_iam_role_policy.action["reroute_power"]: Destruction complete after 0s
+aws_iam_role_policy.action["lockdown"]: Destruction complete after 0s
+aws_iam_role_policy.action["close_valve"]: Destruction complete after 1s
+aws_cloudwatch_log_group.action["lockdown"]: Destruction complete after 0s
+aws_cloudwatch_log_group.action["raise_alarm"]: Destruction complete after 0s
+aws_cloudwatch_log_group.action["reroute_power"]: Destruction complete after 0s
+aws_cloudwatch_log_group.action["close_valve"]: Destruction complete after 0s
+aws_iam_role.action["lockdown"]: Destruction complete after 0s
+aws_iam_role.action["close_valve"]: Destruction complete after 0s
+aws_iam_role.action["raise_alarm"]: Destruction complete after 0s
+aws_iam_role.action["reroute_power"]: Destruction complete after 1s
+aws_dynamodb_table.incident_log: Destruction complete after 8s
+aws_dynamodb_table.state: Destruction complete after 14s
+Apply complete! Resources: 0 added, 0 changed, 67 destroyed.
+
+# Step 2: infra/backend (budget and state bucket), last
+Plan: 0 to add, 0 to change, 7 to destroy.
+aws_s3_bucket_policy.tfstate_tls_only: Destruction complete after 1s
+aws_s3_bucket_server_side_encryption_configuration.tfstate: Destruction complete after 2s
+aws_s3_bucket_versioning.tfstate: Destruction complete after 2s
+aws_s3_bucket_public_access_block.tfstate: Destruction complete after 1s
+aws_s3_bucket_ownership_controls.tfstate: Destruction complete after 2s
+aws_s3_bucket.tfstate: Destruction complete after 3s
+aws_budgets_budget.monthly: Destruction complete after 1s
+Apply complete! Resources: 0 added, 0 changed, 7 destroyed.

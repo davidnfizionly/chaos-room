@@ -1,0 +1,30 @@
+# Phase 7 teardown verification, 2026-10-15T19:18:17.783Z, region us-east-1
+## resourcegroupstaggingapi get-resources --tag-filters Key=Project,Values=chaos-room
+[]
+## aws iot list-things (chaos-room*)
+[]
+## aws iot list-certificates (all, count)
+0
+## aws iot list-policies (chaos-room*)
+[]
+## aws iot list-topic-rules (chaos_room*)
+[]
+## aws lambda list-functions (chaos-room*)
+[]
+## aws dynamodb list-tables (chaos-room*)
+[]
+## aws stepfunctions list-state-machines (chaos-room*)
+[]
+## aws logs describe-log-groups (name contains chaos-room)
+[]
+## aws apigatewayv2 get-apis (chaos-room*)
+[]
+## aws iam list-roles (chaos-room*)
+[]
+## aws budgets describe-budgets (chaos-room*)
+null
+## aws s3api head-bucket chaos-room-tfstate-<account-id>
+aws: [ERROR]: An error occurred (404) when calling the HeadBucket operation: Not Found
+## local files written by Terraform (should be gone): simulator/certs/*.cert.pem, dashboard/.env.local
+ls: cannot access 'simulator/certs/*.cert.pem': No such file or directory
+ls: cannot access 'dashboard/.env.local': No such file or directory

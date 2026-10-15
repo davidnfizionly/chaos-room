@@ -46,7 +46,7 @@ A simulated control room (a cooling unit, a power bus, an alarm system) whose fa
 - **An append-only audit trail**: no principal in the stack can update or delete an incident log entry
 - **Concurrent incidents**: two simultaneous faults run as two independent executions
 
-Built in one working day (15 October 2026), from an empty AWS account to 100 measured incidents. TODO after Phase 7: teardown date and verification.
+Built in one working day (15 October 2026), from an empty AWS account to 100 measured incidents, then torn down the same day: all 74 resources destroyed and the account checked empty (see Cleanup).
 
 ## Tech Stack
 
@@ -204,9 +204,15 @@ The deployed resources, from the CLI:
 
 ## Cost Discipline
 
-TODO: Cost Explorer figures (before and after), and the screenshot of the budget with credits excluded (`proof/screenshots/01-budget-credits-excluded.png`).
+TODO: final Cost Explorer figure for the build (total and main services), read at least 24 hours after the 15 October 2026 teardown.
 
-Every resource is pay-per-use: no NAT Gateway, no EC2, nothing always-on. The simulator and dashboard run locally and cost nothing when stopped. A 5 USD budget with credits excluded was the first resource created. Cost Explorer lags by up to 24 hours, so the final figure was read the day after teardown.
+Every resource is pay-per-use: no NAT Gateway, no EC2, nothing always-on. The simulator and dashboard run locally and cost nothing when stopped. Cost Explorer lags by up to 24 hours, so the final figure is read the day after teardown, not on the day.
+
+A 5 USD monthly budget, with credits and refunds excluded so that promotional credits cannot hide real spend, was the first resource created. On the day of the build it showed 0.00 USD spent of 5.00 USD:
+
+![Budget With Credits Excluded](proof/screenshots/01-budget-credits-excluded.png)
+
+The same page showed "0/1 email verified": the alert e-mail subscription was never confirmed, so an alert would probably not have been delivered. The spend stayed far below the threshold, but the alert itself was not a working safety net.
 
 ## Running This Yourself
 
@@ -285,4 +291,4 @@ aws iot list-things
 aws iot list-certificates
 ```
 
-TODO after Phase 7: verification output and Cost Explorer check the next day.
+Run on 15 October 2026: 67 resources destroyed in the main stack, then 7 in the bootstrap stack, with no error. Every check came back empty: no resource tagged `Project=chaos-room`, no IoT thing, certificate, policy or rule, no Lambda, DynamoDB table, state machine, log group, API, IAM role or budget left, and the state bucket returns 404. Output in `proof/28-teardown-destroy.txt` and `proof/29-teardown-verification.txt`.
