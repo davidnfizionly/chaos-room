@@ -5,12 +5,13 @@
 //   node scenario.mjs single <cooling|power>
 //   node scenario.mjs concurrent
 //   node scenario.mjs escalation <cooling|power>
+//   node scenario.mjs measure <single|concurrent|escalation> <cooling|power|-> <runs>
 //
 // Needs the simulator running (npm start), AWS credentials, and IOT_ENDPOINT (npm run scenario).
 
 import { IoTDataPlaneClient, PublishCommand } from '@aws-sdk/client-iot-data-plane';
 import { DynamoDBClient, DeleteItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
-import { existsSync, readFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -22,6 +23,8 @@ const REMEDIABLE = ['cooling', 'power'];
 const iot = new IoTDataPlaneClient({ endpoint: `https://${process.env.IOT_ENDPOINT}` });
 const ddb = new DynamoDBClient({});
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+let quiet = false;
+const say = (...args) => { if (!quiet) say(...args); };
 
 const command = (component, body) =>
   iot.send(new PublishCommand({ topic: `chaos-room/cmd/${component}`, qos: 1, payload: Buffer.from(JSON.stringify(body)) }));
@@ -32,7 +35,7 @@ async function reset() {
   await pause(2000);
   const ids = REMEDIABLE.flatMap((c) => [`LOCK#${c}`, `INJECT#${c}`]);
   await Promise.all(ids.map((id) => ddb.send(new DeleteItemCommand({ TableName: STATE_TABLE, Key: { id: { S: id } } }))));
-  console.log('reset: devices back to baseline, alarm cleared, locks and failure injections removed');
+  say('reset: devices back to baseline, alarm cleared, locks and failure injections removed');
 }
 
 async function eventsSince(sinceMs) {
@@ -87,74 +90,125 @@ function deviceLatency(incidentId) {
 function printIncident(incident) {
   const detected = incident.events.find((e) => e.event === 'DETECTED');
   const ingest = detected.detail.ingest_ts;
-  console.log(`\nIncident ${incident.incident_id} (${incident.component}, ${detected.detail.fault_type})`);
-  console.log(`  reading: ${JSON.stringify(detected.detail)}`);
-  console.log('  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):');
+  say(`\nIncident ${incident.incident_id} (${incident.component}, ${detected.detail.fault_type})`);
+  say(`  reading: ${JSON.stringify(detected.detail)}`);
+  say('  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):');
   for (const e of incident.events) {
     const d = e.detail;
     const info = d.action ? `${d.action}${d.duration_ms != null ? ` (lambda ${d.duration_ms} ms)` : ''}${d.error ? ` ${d.error}: ${d.cause}` : ''}${d.result ? ` -> ${d.result}` : ''}`
       : d.message ?? (e.event === 'DETECTED' ? `rule matched, execution started ${d.execution_started}` : JSON.stringify(d));
-    console.log(`    +${String(e.at_ms - ingest).padStart(5)} ms  ${e.event.padEnd(17)} ${info}`);
+    say(`    +${String(e.at_ms - ingest).padStart(5)} ms  ${e.event.padEnd(17)} ${info}`);
   }
   const action = incident.events.find((e) => e.event === 'REMEDIATED');
-  if (action) console.log(`  AWS side: ingest -> remediation action done = ${action.detail.finished_ms - ingest} ms`);
+  if (action) say(`  AWS side: ingest -> remediation action done = ${action.detail.finished_ms - ingest} ms`);
   return detected;
 }
 
-async function printDeviceLatency(incidentId) {
+async function waitDeviceLatency(incidentId) {
   for (let i = 0; i < 10; i++) {
     const l = deviceLatency(incidentId);
-    if (l) return console.log(`  Device clock (${l.component}): fault published -> remediation command received = ${l.latency_ms} ms`);
+    if (l) {
+      say(`  Device clock (${l.component}): fault published -> remediation command received = ${l.latency_ms} ms`);
+      return l;
+    }
     await pause(200);
   }
-  console.log('  Device clock: no latency record found (is the simulator running?)');
+  say('  Device clock: no latency record found (is the simulator running?)');
+  return null;
 }
 
 async function countIncidentsAfterSettle(sinceMs, component) {
   await pause(3000);
   const n = groupIncidents(await eventsSince(sinceMs)).filter((i) => i.component === component).length;
-  console.log(`  Incidents opened for ${component} in this run (3 s after resolution): ${n}${n === 1 ? ' (repeated fault readings deduplicated)' : ''}`);
+  say(`  Incidents opened for ${component} in this run (3 s after resolution): ${n}${n === 1 ? ' (repeated fault readings deduplicated)' : ''}`);
+  return n;
+}
+
+// Per-incident timings. AWS-side figures use AWS clocks only (IoT ingest timestamp, Step
+// Functions / Lambda times); the device figure uses the device clock only (ADR 011).
+function metrics(incident, device) {
+  const ev = Object.fromEntries(incident.events.map((e) => [e.event, e]));
+  const ingest = ev.DETECTED.detail.ingest_ts;
+  const action = ev.REMEDIATED ?? null;
+  return {
+    component: incident.component,
+    incident_id: incident.incident_id,
+    ingest_to_workflow_start_ms: Date.parse(ev.DETECTED.detail.execution_started) - ingest,
+    action_lambda_ms: action ? action.detail.duration_ms : null,
+    ingest_to_action_done_ms: action ? action.detail.finished_ms - ingest : null,
+    ingest_to_resolved_ms: ev.RESOLVED ? ev.RESOLVED.detail.ingest_to_resolved_ms : null,
+    ingest_to_escalated_ms: ev.ESCALATED ? ev.ESCALATED.detail.ingest_to_escalated_ms : null,
+    action_error: ev.ACTION_FAILED ? ev.ACTION_FAILED.detail.error : null,
+    device_fault_to_command_ms: device ? device.latency_ms : null,
+    events: incident.events.map((e) => e.event),
+  };
 }
 
 async function single(component) {
   await reset();
   const since = Date.now() - 1000;
   await command(component, { action: 'sabotage' });
-  console.log(`sabotage sent to ${component}`);
+  say(`sabotage sent to ${component}`);
   const { done } = await waitForIncidents([component], 'RESOLVED', since);
   printIncident(done[0]);
-  await printDeviceLatency(done[0].incident_id);
-  await countIncidentsAfterSettle(since, component);
+  const device = await waitDeviceLatency(done[0].incident_id);
+  const incidents_opened = await countIncidentsAfterSettle(since, component);
+  return { scenario: 'single', ...metrics(done[0], device), incidents_opened };
 }
 
 async function concurrent() {
   await reset();
   const since = Date.now() - 1000;
   await Promise.all(REMEDIABLE.map((c) => command(c, { action: 'sabotage' })));
-  console.log(`sabotage sent to ${REMEDIABLE.join(' and ')} at the same time`);
+  say(`sabotage sent to ${REMEDIABLE.join(' and ')} at the same time`);
   const { done } = await waitForIncidents(REMEDIABLE, 'RESOLVED', since);
   const spans = done.map((i) => {
     printIncident(i);
-    return { id: i.incident_id, start: Math.min(...i.events.map((e) => e.at_ms)), end: Math.max(...i.events.map((e) => e.at_ms)) };
+    return { start: Math.min(...i.events.map((e) => e.at_ms)), end: Math.max(...i.events.map((e) => e.at_ms)) };
   });
-  for (const i of done) await printDeviceLatency(i.incident_id);
-  const overlap = Math.min(spans[0].end, spans[1].end) - Math.max(spans[0].start, spans[1].start);
-  console.log(`\nConcurrency: ${done.length} independent executions, ${done.map((i) => i.incident_id).join(' / ')}`);
-  console.log(`  logged windows overlap by ${overlap} ms (${overlap > 0 ? 'ran concurrently' : 'did not overlap'})`);
-  for (const c of REMEDIABLE) await countIncidentsAfterSettle(since, c);
+  const devices = [];
+  for (const i of done) devices.push(await waitDeviceLatency(i.incident_id));
+  const overlap_ms = Math.min(spans[0].end, spans[1].end) - Math.max(spans[0].start, spans[1].start);
+  say(`\nConcurrency: ${done.length} independent executions, ${done.map((i) => i.incident_id).join(' / ')}`);
+  say(`  logged windows overlap by ${overlap_ms} ms (${overlap_ms > 0 ? 'ran concurrently' : 'did not overlap'})`);
+  const incidents = [];
+  for (const [k, i] of done.entries()) {
+    const incidents_opened = await countIncidentsAfterSettle(since, i.component);
+    incidents.push({ ...metrics(i, devices[k]), incidents_opened });
+  }
+  return { scenario: 'concurrent', overlap_ms, incidents };
 }
 
 async function escalation(component) {
   await reset();
   await ddb.send(new PutItemCommand({ TableName: STATE_TABLE, Item: { id: { S: `INJECT#${component}` }, actuator_stuck: { BOOL: true } } }));
-  console.log(`failure injection set: INJECT#${component}.actuator_stuck = true`);
+  say(`failure injection set: INJECT#${component}.actuator_stuck = true`);
   const since = Date.now() - 1000;
   await command(component, { action: 'sabotage' });
-  console.log(`sabotage sent to ${component}`);
+  say(`sabotage sent to ${component}`);
   const { done } = await waitForIncidents([component], 'ESCALATED', since);
   printIncident(done[0]);
-  await countIncidentsAfterSettle(since, component);
-  console.log('  Component lock is kept and the device stays faulty until `node scenario.mjs reset`.');
+  const incidents_opened = await countIncidentsAfterSettle(since, component);
+  say('  Component lock is kept and the device stays faulty until `node scenario.mjs reset`.');
+  return { scenario: 'escalation', ...metrics(done[0], null), incidents_opened };
+}
+
+// node scenario.mjs measure <single|escalation> <cooling|power> <runs>
+// node scenario.mjs measure concurrent - <runs>
+// Appends one JSON line per run to MEASURE_OUT (default measurements.jsonl), then resets.
+async function measure(kind, component, runs) {
+  quiet = true;
+  const out = process.env.MEASURE_OUT ?? join(dirname(fileURLToPath(import.meta.url)), 'measurements.jsonl');
+  for (let run = 1; run <= runs; run++) {
+    const started_at = new Date().toISOString();
+    const r = kind === 'single' ? await single(component) : kind === 'concurrent' ? await concurrent() : await escalation(component);
+    appendFileSync(out, JSON.stringify({ run, started_at, ...r }) + '\n');
+    const list = r.incidents ?? [r];
+    console.log(`${kind} ${component} run ${String(run).padStart(2)}/${runs}: ` + list.map((m) =>
+      `${m.component} incidents=${m.incidents_opened} device=${m.device_fault_to_command_ms ?? '-'}ms action_done=${m.ingest_to_action_done_ms ?? '-'}ms escalated=${m.ingest_to_escalated_ms ?? '-'}ms lambda=${m.action_lambda_ms ?? '-'}ms`).join(' | ') +
+      (r.overlap_ms != null ? ` | overlap=${r.overlap_ms}ms` : ''));
+  }
+  await reset();
 }
 
 const [scenario, arg] = process.argv.slice(2);
@@ -168,7 +222,11 @@ try {
   else if (scenario === 'single') await single(needsComponent(arg));
   else if (scenario === 'concurrent') await concurrent();
   else if (scenario === 'escalation') await escalation(needsComponent(arg));
-  else throw new Error('usage: node scenario.mjs reset | single <cooling|power> | concurrent | escalation <cooling|power>');
+  else if (scenario === 'measure') {
+    const [kind, component, runs] = [arg, process.argv[4], Number(process.argv[5])];
+    if (!['single', 'concurrent', 'escalation'].includes(kind) || !(runs > 0)) throw new Error('usage: measure <single|concurrent|escalation> <cooling|power|-> <runs>');
+    await measure(kind, kind === 'concurrent' ? 'both' : needsComponent(component), runs);
+  } else throw new Error('usage: node scenario.mjs reset | single <cooling|power> | concurrent | escalation <cooling|power> | measure <kind> <component|-> <runs>');
 } catch (err) {
   console.error(`ERROR: ${err.message}`);
   process.exit(1);

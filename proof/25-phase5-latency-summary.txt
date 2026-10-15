@@ -1,0 +1,102 @@
+# Phase 5 measurements: 2026-10-15 16:05:40Z -> 16:16:19Z, 80 runs, each run starts with a reset
+# Runs: single cooling x20, single power x20, concurrent x20 (2 sabotages each), escalation cooling x10, escalation power x10
+# Device clock = simulator clock only (fault reading published -> remediation command received). AWS = AWS clocks only (ADR 011).
+# 'fresh container' = action Lambda handler > 300 ms (first call on a new container pays SDK/TLS setup).
+# Commands: npm run scenario -- measure <single|concurrent|escalation> <cooling|power|-> <runs>; node summarize.mjs
+
+
+SINGLE SABOTAGE - cooling (20 incidents)
+  device clock: fault published -> fix received  n=20  min=  370  median=  437  max= 1475 ms
+  AWS: ingest -> workflow started                n=20  min=   42  median=   70  max=  140 ms
+  AWS: ingest -> remediation action done         n=20  min=   97  median=  167  max= 1205 ms
+  AWS: ingest -> incident resolved               n=20  min=  111  median=  180  max= 1234 ms
+  remediation Lambda handler                     n=20  min=   19  median=   33  max=  609 ms
+  sub-second, device clock: 19/20   sub-second, AWS ingest -> action done: 19/20
+  warm Lambda (handler <= 300 ms): 19   fresh container (handler > 300 ms): 1
+    warm only: device clock fault -> fix         n=19  min=  370  median=  432  max=  608 ms
+    fresh only: device clock fault -> fix        n= 1  min= 1475  median= 1475  max= 1475 ms
+  exactly one incident per sabotage: 20/20
+
+SINGLE SABOTAGE - power (20 incidents)
+  device clock: fault published -> fix received  n=20  min=  383  median=  451  max= 1538 ms
+  AWS: ingest -> workflow started                n=20  min=   60  median=   79  max=  105 ms
+  AWS: ingest -> remediation action done         n=20  min=  152  median=  176  max= 1290 ms
+  AWS: ingest -> incident resolved               n=20  min=  163  median=  192  max= 1318 ms
+  remediation Lambda handler                     n=20  min=   19  median=   29  max=  617 ms
+  sub-second, device clock: 19/20   sub-second, AWS ingest -> action done: 19/20
+  warm Lambda (handler <= 300 ms): 19   fresh container (handler > 300 ms): 1
+    warm only: device clock fault -> fix         n=19  min=  383  median=  448  max=  621 ms
+    fresh only: device clock fault -> fix        n= 1  min= 1538  median= 1538  max= 1538 ms
+  exactly one incident per sabotage: 20/20
+
+SINGLE SABOTAGE - both components combined (40 incidents)
+  device clock: fault published -> fix received  n=40  min=  370  median=  445  max= 1538 ms
+  AWS: ingest -> workflow started                n=40  min=   42  median=   76  max=  140 ms
+  AWS: ingest -> remediation action done         n=40  min=   97  median=  173  max= 1290 ms
+  AWS: ingest -> incident resolved               n=40  min=  111  median=  189  max= 1318 ms
+  remediation Lambda handler                     n=40  min=   19  median=   29  max=  617 ms
+  sub-second, device clock: 38/40   sub-second, AWS ingest -> action done: 38/40
+  warm Lambda (handler <= 300 ms): 38   fresh container (handler > 300 ms): 2
+    warm only: device clock fault -> fix         n=38  min=  370  median=  437  max=  621 ms
+    fresh only: device clock fault -> fix        n= 2  min= 1475  median= 1507  max= 1538 ms
+  exactly one incident per sabotage: 40/40
+
+CONCURRENT INCIDENTS - 20 runs, 2 sabotages each (40 incidents)
+  device clock: fault published -> fix received  n=40  min=  403  median=  446  max=  700 ms
+  AWS: ingest -> workflow started                n=40  min=   46  median=   78  max=  163 ms
+  AWS: ingest -> remediation action done         n=40  min=  123  median=  180  max=  311 ms
+  AWS: ingest -> incident resolved               n=40  min=  134  median=  195  max=  323 ms
+  remediation Lambda handler                     n=40  min=   18  median=   29  max=   80 ms
+  sub-second, device clock: 40/40   sub-second, AWS ingest -> action done: 40/40
+  warm Lambda (handler <= 300 ms): 40   fresh container (handler > 300 ms): 0
+  exactly one incident per sabotage: 40/40
+  logged execution windows overlap               n=20  min=  -87  median=   42  max=   98 ms
+  runs where both executions overlapped in time: 17/20
+  runs with two distinct incident ids: 20/20
+
+REMEDIATION FAILURE / ESCALATION (20 incidents)
+  AWS: ingest -> workflow started                n=20  min=   21  median=   71  max=  180 ms
+  AWS: ingest -> escalated (alarm + lockdown)    n=20  min=  189  median=  286  max= 1790 ms
+  full escalation path logged, never RESOLVED: 20/20
+  errors reported by the action: ValveDidNotClose, TransferSwitchFailed
+  exactly one incident per sabotage: 20/20
+
+## Concurrency measured from Step Functions execution history (CloudWatch Logs ExecutionStarted -> ExecutionSucceeded)
+## The 'logged execution windows' figure above only spans DETECTED -> RESOLVED and understates overlap.
+run  1: start gap   65 ms, durations 195 / 126 ms, overlap 61 ms
+run  2: start gap  156 ms, durations 144 / 121 ms, overlap -12 ms
+run  3: start gap   21 ms, durations 108 / 101 ms, overlap 80 ms
+run  4: start gap    4 ms, durations 130 / 123 ms, overlap 123 ms
+run  5: start gap   14 ms, durations 103 / 100 ms, overlap 86 ms
+run  6: start gap   31 ms, durations 161 / 143 ms, overlap 112 ms
+run  7: start gap    4 ms, durations 117 / 114 ms, overlap 113 ms
+run  8: start gap   28 ms, durations 107 / 93 ms, overlap 65 ms
+run  9: start gap  146 ms, durations 164 / 121 ms, overlap -25 ms
+run 10: start gap    6 ms, durations 152 / 157 ms, overlap 151 ms
+run 11: start gap   23 ms, durations 108 / 108 ms, overlap 85 ms
+run 12: start gap   45 ms, durations 142 / 91 ms, overlap 46 ms
+run 13: start gap   56 ms, durations 131 / 125 ms, overlap 69 ms
+run 14: start gap   46 ms, durations 129 / 133 ms, overlap 87 ms
+run 15: start gap   18 ms, durations 109 / 110 ms, overlap 91 ms
+run 16: start gap   50 ms, durations 123 / 126 ms, overlap 76 ms
+run 17: start gap   42 ms, durations 106 / 128 ms, overlap 86 ms
+run 18: start gap   87 ms, durations 123 / 134 ms, overlap 47 ms
+run 19: start gap   20 ms, durations 142 / 132 ms, overlap 122 ms
+run 20: start gap   16 ms, durations 135 / 101 ms, overlap 85 ms
+overlap (Step Functions ExecutionStarted->ExecutionSucceeded): min -25 median 85 max 151 ms; overlapping runs 18/20
+start gap between the two executions: min 4 median 30 max 156 ms
+
+## Step Functions execution events in the measurement window (both state machines)
+     20 ExecutionFailed
+    214 ExecutionStarted
+    194 ExecutionSucceeded
+## 214 started = 100 incidents + 114 suppressed duplicates (repeated fault readings, mostly while an escalated component stayed locked until the next reset)
+
+## Incident log events in the measurement window, by type
+     20 ACTION_FAILED
+     20 ALARM_RAISED
+    100 DETECTED
+     20 ESCALATED
+     20 LOCKDOWN_ENGAGED
+     80 REMEDIATED
+     80 RESOLVED

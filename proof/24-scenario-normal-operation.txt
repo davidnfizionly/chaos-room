@@ -1,0 +1,16 @@
+# Scenario 1 - Normal operation: simulator running, no sabotage, 2026-10-15 15:59:54Z -> 16:04:59Z (5 min 5 s)
+# Started from a clean state (reset, no LOCK#/INJECT# items).
+incident log events in window: 0
+cooling executions started in window: 0
+power executions started in window: 0
+IoT rule errors in window: 0
+simulator disconnects/errors in window: 0
+
+## CloudWatch AWS/IoT PublishIn.Success (MQTT), 1-minute sums (times UTC+3). Expected 3 devices x 60 = 180 per full minute.
+## 18:59 includes 3 immediate publishes triggered by the reset commands.
+2026-10-15T18:59:00+03:00	183.0
+2026-10-15T19:00:00+03:00	180.0
+2026-10-15T19:01:00+03:00	180.0
+2026-10-15T19:02:00+03:00	180.0
+2026-10-15T19:03:00+03:00	180.0
+2026-10-15T19:04:00+03:00	180.0

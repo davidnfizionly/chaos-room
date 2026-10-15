@@ -1,0 +1,82 @@
+measure start 2026-10-15T16:05:40.921Z
+single cooling run  1/20: cooling incidents=1 device=1475ms action_done=1205ms escalated=-ms lambda=609ms
+single cooling run  2/20: cooling incidents=1 device=432ms action_done=183ms escalated=-ms lambda=61ms
+single cooling run  3/20: cooling incidents=1 device=551ms action_done=194ms escalated=-ms lambda=53ms
+single cooling run  4/20: cooling incidents=1 device=478ms action_done=205ms escalated=-ms lambda=38ms
+single cooling run  5/20: cooling incidents=1 device=608ms action_done=313ms escalated=-ms lambda=78ms
+single cooling run  6/20: cooling incidents=1 device=557ms action_done=229ms escalated=-ms lambda=69ms
+single cooling run  7/20: cooling incidents=1 device=414ms action_done=159ms escalated=-ms lambda=27ms
+single cooling run  8/20: cooling incidents=1 device=442ms action_done=136ms escalated=-ms lambda=22ms
+single cooling run  9/20: cooling incidents=1 device=529ms action_done=161ms escalated=-ms lambda=27ms
+single cooling run 10/20: cooling incidents=1 device=464ms action_done=240ms escalated=-ms lambda=58ms
+single cooling run 11/20: cooling incidents=1 device=386ms action_done=127ms escalated=-ms lambda=19ms
+single cooling run 12/20: cooling incidents=1 device=420ms action_done=165ms escalated=-ms lambda=23ms
+single cooling run 13/20: cooling incidents=1 device=534ms action_done=168ms escalated=-ms lambda=21ms
+single cooling run 14/20: cooling incidents=1 device=409ms action_done=142ms escalated=-ms lambda=26ms
+single cooling run 15/20: cooling incidents=1 device=562ms action_done=209ms escalated=-ms lambda=53ms
+single cooling run 16/20: cooling incidents=1 device=385ms action_done=134ms escalated=-ms lambda=20ms
+single cooling run 17/20: cooling incidents=1 device=428ms action_done=122ms escalated=-ms lambda=20ms
+single cooling run 18/20: cooling incidents=1 device=370ms action_done=97ms escalated=-ms lambda=19ms
+single cooling run 19/20: cooling incidents=1 device=410ms action_done=185ms escalated=-ms lambda=43ms
+single cooling run 20/20: cooling incidents=1 device=417ms action_done=165ms escalated=-ms lambda=40ms
+single power run  1/20: power incidents=1 device=1538ms action_done=1290ms escalated=-ms lambda=617ms
+single power run  2/20: power incidents=1 device=414ms action_done=191ms escalated=-ms lambda=52ms
+single power run  3/20: power incidents=1 device=576ms action_done=227ms escalated=-ms lambda=47ms
+single power run  4/20: power incidents=1 device=549ms action_done=173ms escalated=-ms lambda=23ms
+single power run  5/20: power incidents=1 device=559ms action_done=207ms escalated=-ms lambda=54ms
+single power run  6/20: power incidents=1 device=401ms action_done=205ms escalated=-ms lambda=57ms
+single power run  7/20: power incidents=1 device=405ms action_done=156ms escalated=-ms lambda=19ms
+single power run  8/20: power incidents=1 device=454ms action_done=207ms escalated=-ms lambda=45ms
+single power run  9/20: power incidents=1 device=621ms action_done=163ms escalated=-ms lambda=20ms
+single power run 10/20: power incidents=1 device=432ms action_done=207ms escalated=-ms lambda=45ms
+single power run 11/20: power incidents=1 device=429ms action_done=180ms escalated=-ms lambda=27ms
+single power run 12/20: power incidents=1 device=415ms action_done=159ms escalated=-ms lambda=19ms
+single power run 13/20: power incidents=1 device=479ms action_done=171ms escalated=-ms lambda=37ms
+single power run 14/20: power incidents=1 device=427ms action_done=169ms escalated=-ms lambda=19ms
+single power run 15/20: power incidents=1 device=383ms action_done=152ms escalated=-ms lambda=30ms
+single power run 16/20: power incidents=1 device=491ms action_done=160ms escalated=-ms lambda=21ms
+single power run 17/20: power incidents=1 device=602ms action_done=171ms escalated=-ms lambda=20ms
+single power run 18/20: power incidents=1 device=392ms action_done=172ms escalated=-ms lambda=21ms
+single power run 19/20: power incidents=1 device=448ms action_done=179ms escalated=-ms lambda=21ms
+single power run 20/20: power incidents=1 device=466ms action_done=201ms escalated=-ms lambda=35ms
+concurrent both run  1/20: cooling incidents=1 device=638ms action_done=281ms escalated=-ms lambda=80ms | power incidents=1 device=555ms action_done=171ms escalated=-ms lambda=29ms | overlap=18ms
+concurrent both run  2/20: cooling incidents=1 device=412ms action_done=162ms escalated=-ms lambda=32ms | power incidents=1 device=497ms action_done=193ms escalated=-ms lambda=41ms | overlap=-55ms
+concurrent both run  3/20: cooling incidents=1 device=453ms action_done=193ms escalated=-ms lambda=25ms | power incidents=1 device=470ms action_done=177ms escalated=-ms lambda=19ms | overlap=38ms
+concurrent both run  4/20: cooling incidents=1 device=441ms action_done=179ms escalated=-ms lambda=20ms | power incidents=1 device=472ms action_done=182ms escalated=-ms lambda=19ms | overlap=81ms
+concurrent both run  5/20: cooling incidents=1 device=406ms action_done=152ms escalated=-ms lambda=23ms | power incidents=1 device=406ms action_done=154ms escalated=-ms lambda=20ms | overlap=47ms
+concurrent both run  6/20: cooling incidents=1 device=465ms action_done=220ms escalated=-ms lambda=63ms | power incidents=1 device=421ms action_done=198ms escalated=-ms lambda=43ms | overlap=72ms
+concurrent both run  7/20: cooling incidents=1 device=451ms action_done=177ms escalated=-ms lambda=22ms | power incidents=1 device=420ms action_done=182ms escalated=-ms lambda=19ms | overlap=68ms
+concurrent both run  8/20: cooling incidents=1 device=428ms action_done=161ms escalated=-ms lambda=23ms | power incidents=1 device=433ms action_done=159ms escalated=-ms lambda=19ms | overlap=29ms
+concurrent both run  9/20: cooling incidents=1 device=545ms action_done=311ms escalated=-ms lambda=53ms | power incidents=1 device=403ms action_done=166ms escalated=-ms lambda=21ms | overlap=-87ms
+concurrent both run 10/20: cooling incidents=1 device=480ms action_done=188ms escalated=-ms lambda=37ms | power incidents=1 device=478ms action_done=215ms escalated=-ms lambda=60ms | overlap=98ms
+concurrent both run 11/20: cooling incidents=1 device=406ms action_done=138ms escalated=-ms lambda=31ms | power incidents=1 device=408ms action_done=171ms escalated=-ms lambda=21ms | overlap=41ms
+concurrent both run 12/20: cooling incidents=1 device=567ms action_done=181ms escalated=-ms lambda=32ms | power incidents=1 device=408ms action_done=123ms escalated=-ms lambda=21ms | overlap=4ms
+concurrent both run 13/20: cooling incidents=1 device=519ms action_done=203ms escalated=-ms lambda=41ms | power incidents=1 device=513ms action_done=151ms escalated=-ms lambda=29ms | overlap=26ms
+concurrent both run 14/20: cooling incidents=1 device=700ms action_done=229ms escalated=-ms lambda=33ms | power incidents=1 device=644ms action_done=179ms escalated=-ms lambda=36ms | overlap=42ms
+concurrent both run 15/20: cooling incidents=1 device=419ms action_done=168ms escalated=-ms lambda=27ms | power incidents=1 device=436ms action_done=201ms escalated=-ms lambda=18ms | overlap=51ms
+concurrent both run 16/20: cooling incidents=1 device=427ms action_done=156ms escalated=-ms lambda=29ms | power incidents=1 device=419ms action_done=180ms escalated=-ms lambda=21ms | overlap=35ms
+concurrent both run 17/20: cooling incidents=1 device=413ms action_done=142ms escalated=-ms lambda=18ms | power incidents=1 device=436ms action_done=181ms escalated=-ms lambda=32ms | overlap=48ms
+concurrent both run 18/20: cooling incidents=1 device=482ms action_done=175ms escalated=-ms lambda=40ms | power incidents=1 device=433ms action_done=184ms escalated=-ms lambda=22ms | overlap=-1ms
+concurrent both run 19/20: cooling incidents=1 device=460ms action_done=193ms escalated=-ms lambda=38ms | power incidents=1 device=531ms action_done=261ms escalated=-ms lambda=46ms | overlap=78ms
+concurrent both run 20/20: cooling incidents=1 device=460ms action_done=185ms escalated=-ms lambda=39ms | power incidents=1 device=410ms action_done=145ms escalated=-ms lambda=19ms | overlap=47ms
+escalation cooling run  1/10: cooling incidents=1 device=-ms action_done=-ms escalated=1790ms lambda=-ms
+escalation cooling run  2/10: cooling incidents=1 device=-ms action_done=-ms escalated=251ms lambda=-ms
+escalation cooling run  3/10: cooling incidents=1 device=-ms action_done=-ms escalated=314ms lambda=-ms
+escalation cooling run  4/10: cooling incidents=1 device=-ms action_done=-ms escalated=287ms lambda=-ms
+escalation cooling run  5/10: cooling incidents=1 device=-ms action_done=-ms escalated=302ms lambda=-ms
+escalation cooling run  6/10: cooling incidents=1 device=-ms action_done=-ms escalated=315ms lambda=-ms
+escalation cooling run  7/10: cooling incidents=1 device=-ms action_done=-ms escalated=261ms lambda=-ms
+escalation cooling run  8/10: cooling incidents=1 device=-ms action_done=-ms escalated=358ms lambda=-ms
+escalation cooling run  9/10: cooling incidents=1 device=-ms action_done=-ms escalated=268ms lambda=-ms
+escalation cooling run 10/10: cooling incidents=1 device=-ms action_done=-ms escalated=348ms lambda=-ms
+escalation power run  1/10: power incidents=1 device=-ms action_done=-ms escalated=358ms lambda=-ms
+escalation power run  2/10: power incidents=1 device=-ms action_done=-ms escalated=285ms lambda=-ms
+escalation power run  3/10: power incidents=1 device=-ms action_done=-ms escalated=268ms lambda=-ms
+escalation power run  4/10: power incidents=1 device=-ms action_done=-ms escalated=274ms lambda=-ms
+escalation power run  5/10: power incidents=1 device=-ms action_done=-ms escalated=225ms lambda=-ms
+escalation power run  6/10: power incidents=1 device=-ms action_done=-ms escalated=231ms lambda=-ms
+escalation power run  7/10: power incidents=1 device=-ms action_done=-ms escalated=189ms lambda=-ms
+escalation power run  8/10: power incidents=1 device=-ms action_done=-ms escalated=251ms lambda=-ms
+escalation power run  9/10: power incidents=1 device=-ms action_done=-ms escalated=289ms lambda=-ms
+escalation power run 10/10: power incidents=1 device=-ms action_done=-ms escalated=304ms lambda=-ms
+measure end 2026-10-15T16:16:19.366Z

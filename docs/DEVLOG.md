@@ -61,3 +61,29 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 - **What happened:** in the browser test, a cooling sabotage was remediated 265 ms after the fault reached AWS. With a 1 s poll, the tile went Healthy -> Healthy: a viewer never saw the fault at all. Another run showed the power tile flash `FAULT` right after `Fixing...`.
 - **Root cause:** the poll period is longer than the whole incident. The `FAULT` flash came from the faulty reading mirrored just after the lock was released, i.e. inside the settle window (same root cause as the duplicate incidents in Phase 3).
 - **Fix:** a resolved incident stays on its tile for 8 s ("Fault detected and fixed in N ms"), a status message rather than an animation; and a faulty reading inside the settle window is shown as `Fixing...`, not `FAULT`.
+
+## Phase 5
+
+### A component was left in lockdown between sessions
+
+- **What happened:** before the Phase 5 captures, `chaos-room-state` still held `LOCK#cooling` and `INJECT#cooling.actuator_stuck = true` from a dashboard "Sabotage + jam the fix" that was never followed by a reset. The console capture of the cooling executions showed 817 executions of 15-40 ms: suppressed duplicates, one per faulty reading while the simulator was running.
+- **Root cause:** by design an escalated component stays locked until a manual reset, and nothing reminds the operator.
+- **Fix:** every measurement and capture run now starts with a reset and a check that no `LOCK#` / `INJECT#` item is left.
+
+### My own lock check reported a lock that did not exist
+
+- **What happened:** after the reset, a check said `LOCK#cooling STILL PRESENT` while a table scan showed no lock.
+- **Root cause:** `aws dynamodb get-item --query Item --output text` prints `None` when the item is absent, and `grep -q .` matched that text.
+- **Fix:** compare the returned id to the expected key. Same lesson as the Phase 2 policy test: a check needs to prove it can fail correctly too.
+
+### A 5-minute wait ended instantly
+
+- **What happened:** the wait for the 5-minute normal-operation window returned immediately.
+- **Root cause:** on this Ubuntu 26 image `date +%s%3N` printed nanoseconds, not milliseconds (the `%3N` width was ignored), so the computed deadline was 0.3 ms away.
+- **Fix:** timestamps now come from Node (`Date.now()`); the window was completed and re-checked from its real start time.
+
+### Concurrent incidents did not always overlap in time
+
+- **What happened:** in 2 of the 20 concurrent runs, the two Step Functions executions did not overlap (-12 ms and -25 ms). The first estimate, from the incident log's DETECTED -> RESOLVED windows, said 3/20; the execution history (ExecutionStarted -> ExecutionSucceeded) is the accurate measure.
+- **Root cause:** the two sabotage commands are two separate MQTT publishes travelling from Nairobi; in those runs they arrived 146 ms and 156 ms apart, while a warm execution only lasts about 100-160 ms. The first was finished before the second started.
+- **Fix:** none in the system: each incident still had its own execution, its own lock, and exactly one incident, with no interference. Reported as measured: 18/20 runs overlapped, median overlap 85 ms.
