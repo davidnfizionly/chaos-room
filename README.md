@@ -67,7 +67,7 @@ Built in one working day (15 October 2026), from an empty AWS account to 100 mea
 
 ## The Build, in Order
 
-**1. Budget first.** A 5 USD monthly AWS Budget with credits and refunds excluded, created before any other resource. With promotional credits in the account, a credit-inclusive budget reports about 0 USD and would never fire.
+**1. Budget first.** A 5 USD monthly AWS Budget with credits and refunds excluded, created before any other resource. With promotional credits in the account, a credit-inclusive budget would not count the spend the credits absorb, and would never fire.
 
 **2. Terraform backend.** A versioned, encrypted S3 state bucket with public access blocked and a TLS-only policy. State locking uses the S3 native lockfile (`use_lockfile = true`) instead of the DynamoDB lock table in the original plan, since DynamoDB locking is deprecated in Terraform's S3 backend.
 
@@ -101,7 +101,7 @@ Everything below happened during the build and is recorded in `docs/DEVLOG.md`.
 
 **Concurrent incidents did not always overlap in time.** In 2 of 20 concurrent runs the two Step Functions executions did not overlap. The two sabotage commands are separate MQTT messages from Nairobi; in those runs they arrived 146 ms and 156 ms apart, while a warm execution lasts about 100 to 160 ms. Each incident still had its own execution and its own lock, with no interference. Reported as measured: 18 of 20 runs overlapped.
 
-**A component in lockdown starts one workflow per second.** After an escalation, the device keeps publishing faulty readings and the IoT Rule keeps starting executions, which stop at the lock (`SuppressedDuplicate`). One session left the cooling unit in lockdown; the console then listed 817 cooling executions over 3 hours, the visible ones all 15 to 40 ms suppressed duplicates. This is the intended behavior (no duplicate incidents, nothing written to the audit log, about 1 USD per million executions), and every scripted run now starts with a reset and a check that no lock is left.
+**A component in lockdown starts one workflow per second.** After an escalation, the device keeps publishing faulty readings and the IoT Rule keeps starting executions, which stop at the lock (`SuppressedDuplicate`). One session left the cooling unit in lockdown; the console then listed 817 cooling executions over 3 hours, the visible ones all 15 to 40 ms suppressed duplicates. This is the intended behavior (no duplicate incidents, nothing written to the audit log), and every scripted run now starts with a reset and a check that no lock is left.
 
 **Verification scripts that lied.** A lock check reported `STILL PRESENT` for an item that did not exist, because `--output text` prints `None` and `grep -q .` matched it. A 5-minute wait ended instantly because `date +%s%3N` printed nanoseconds on this Ubuntu image. CloudWatch showed 120 IoT messages for a minute that really had 180, because the minute was still being aggregated. Each was caught by cross-checking against a second source.
 
@@ -218,15 +218,28 @@ db7d2a4 Phase 1: Terraform backend, budget alert, repo skeleton
 
 ## Cost Discipline
 
-TODO: final Cost Explorer figure for the build (total and main services), read at least 24 hours after the 15 October 2026 teardown.
+The stack used only pay-per-use services: no NAT Gateway, no EC2, no always-on resource.
 
-Every resource is pay-per-use: no NAT Gateway, no EC2, nothing always-on. The simulator and dashboard run locally and cost nothing when stopped. Cost Explorer lags by up to 24 hours, so the final figure is read the day after teardown, not on the day.
-
-A 5 USD monthly budget, with credits and refunds excluded so that promotional credits cannot hide real spend, was the first resource created. On the day of the build it showed 0.00 USD spent of 5.00 USD:
+A 5 USD monthly AWS Budget was the first resource created, with credits and refunds excluded so that promotional credits cannot hide real spend. The budget page shows the limit and the excluded charge types:
 
 ![Budget With Credits Excluded](proof/screenshots/01-budget-credits-excluded.png)
 
-The same page showed "0/1 email verified": the alert e-mail subscription was never confirmed, so an alert would probably not have been delivered. The spend stayed far below the threshold, but the alert itself was not a working safety net.
+The same page showed "0/1 email verified": the alert e-mail subscription was never confirmed, so an alert would probably not have been delivered. The budget was in place, but its alert was not a working safety net during the build.
+
+Every resource that supports tags carried `Project=chaos-room` through the Terraform provider's default tags (`proof/03-budget-and-state-bucket-verification.txt`). IoT things and certificates cannot be tagged, so the teardown check lists them by name.
+
+On 15 October 2026, the day of the build, the main stack (67 resources) and then the bootstrap stack (7 resources) were destroyed, and every check came back empty:
+
+```bash
+aws resourcegroupstaggingapi get-resources --tag-filters Key=Project,Values=chaos-room
+# []
+aws iot list-things          # no chaos-room thing
+aws iot list-certificates    # 0 certificates
+aws s3api head-bucket --bucket chaos-room-tfstate-<account-id>
+# An error occurred (404) when calling the HeadBucket operation: Not Found
+```
+
+The same empty result for Lambda functions, DynamoDB tables, state machines, log groups, APIs, IAM roles and the budget is in `proof/29-teardown-verification.txt`.
 
 ## Running This Yourself
 
@@ -274,7 +287,7 @@ npm install && npm run dev       # open http://localhost:5173
 
 **Rule-based thresholds over ML anomaly detection.** Every detection traces back to one readable SQL condition, which matters more than sophistication for an automated remediation path.
 
-**A local simulator over a scheduled Lambda publisher.** EventBridge schedules run at most once a minute and would bypass device registration. The local process exercises the real path (thing, certificate, scoped policy) and costs nothing when stopped. The Lambda in the sabotage path is the API command function.
+**A local simulator over a scheduled Lambda publisher.** EventBridge schedules run at most once a minute and would bypass device registration. The local process exercises the real path (thing, certificate, scoped policy) and runs only while it is started. The Lambda in the sabotage path is the API command function.
 
 **A settle window over releasing the lock at remediation time.** Releasing the lock as soon as the fix was sent produced a duplicate incident per run. Keeping the incident open for 1.5 s after the fix covers readings already in flight.
 
