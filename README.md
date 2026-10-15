@@ -202,6 +202,20 @@ The deployed resources, from the CLI:
 
 ![DynamoDB Tables](proof/screenshots/13-dynamodb-tables.png)
 
+The build history, one commit per phase (`git log --oneline` at teardown, 15 October 2026):
+
+```text
+e0803dd Phase 7: teardown and verification
+3be733f Add budget and MQTT telemetry captures
+43a8bef Phase 6: README, corrected diagram and GIF
+0d2f566 Phase 6: animated architecture diagram and static PNG
+a50b786 Phase 5: demo validation, latency measurements, console captures
+e347a2d Phase 4: dashboard API and React control room
+81249ed Phase 3: detection rules, Express remediation workflows, incident log
+2b9a92d Phase 2: IoT Core registration, device policy, telemetry simulator
+db7d2a4 Phase 1: Terraform backend, budget alert, repo skeleton
+```
+
 ## Cost Discipline
 
 TODO: final Cost Explorer figure for the build (total and main services), read at least 24 hours after the 15 October 2026 teardown.
