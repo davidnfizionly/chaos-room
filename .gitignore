@@ -1,0 +1,35 @@
+# Terraform state, plans and local config (may contain account details)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+*.tfvars
+*.tfvars.json
+backend.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Secrets and device credentials
+.env
+.env.*
+*.pem
+*.key
+*.crt
+certs/
+
+# Node
+node_modules/
+dist/
+
+# Lambda build artifacts
+*.zip
+build/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

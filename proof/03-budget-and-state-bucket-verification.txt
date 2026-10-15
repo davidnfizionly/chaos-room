@@ -1,0 +1,73 @@
+## aws budgets describe-budget
+{
+    "Name": "chaos-room-monthly",
+    "Limit": {
+        "Amount": "5.0",
+        "Unit": "USD"
+    },
+    "TimeUnit": "MONTHLY",
+    "CostTypes": {
+        "IncludeTax": true,
+        "IncludeSubscription": true,
+        "UseBlended": false,
+        "IncludeRefund": false,
+        "IncludeCredit": false,
+        "IncludeUpfront": true,
+        "IncludeRecurring": true,
+        "IncludeOtherSubscription": true,
+        "IncludeSupport": true,
+        "IncludeDiscount": true,
+        "UseAmortized": false
+    }
+}
+## aws budgets describe-notifications-for-budget
+{
+    "Notifications": [
+        {
+            "NotificationType": "ACTUAL",
+            "ComparisonOperator": "GREATER_THAN",
+            "Threshold": 100.0,
+            "NotificationState": "OK"
+        },
+        {
+            "NotificationType": "ACTUAL",
+            "ComparisonOperator": "GREATER_THAN",
+            "Threshold": 50.0,
+            "NotificationState": "OK"
+        },
+        {
+            "NotificationType": "FORECASTED",
+            "ComparisonOperator": "GREATER_THAN",
+            "Threshold": 100.0,
+            "NotificationState": "OK"
+        }
+    ]
+}
+## subscribers (redacted)
+EMAIL
+## state bucket settings
+{
+    "Status": "Enabled"
+}
+{
+    "SSEAlgorithm": "AES256"
+}
+{
+    "BlockPublicAcls": true,
+    "IgnorePublicAcls": true,
+    "BlockPublicPolicy": true,
+    "RestrictPublicBuckets": true
+}
+{
+    "ObjectOwnership": "BucketOwnerEnforced"
+}
+{
+    "TagSet": [
+        {
+            "Key": "Project",
+            "Value": "chaos-room"
+        }
+    ]
+}
+## tagged resources
+arn:aws:budgets::<ACCOUNT_ID>:budget/chaos-room-monthly	arn:aws:s3:::chaos-room-tfstate-<ACCOUNT_ID>

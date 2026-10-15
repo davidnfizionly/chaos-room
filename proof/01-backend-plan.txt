@@ -1,0 +1,188 @@
+data.aws_caller_identity.current: Reading...
+data.aws_caller_identity.current: Read complete after 0s [id=<ACCOUNT_ID>]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_budgets_budget.monthly will be created
+  + resource "aws_budgets_budget" "monthly" {
+      + account_id        = (known after apply)
+      + arn               = (known after apply)
+      + budget_type       = "COST"
+      + id                = (known after apply)
+      + limit_amount      = "5"
+      + limit_unit        = "USD"
+      + name              = "chaos-room-monthly"
+      + name_prefix       = (known after apply)
+      + tags_all          = {
+          + "Project" = "chaos-room"
+        }
+      + time_period_end   = "2087-06-15_00:00"
+      + time_period_start = (known after apply)
+      + time_unit         = "MONTHLY"
+
+      + cost_filter (known after apply)
+
+      + cost_types {
+          + include_credit             = false
+          + include_discount           = true
+          + include_other_subscription = true
+          + include_recurring          = true
+          + include_refund             = false
+          + include_subscription       = true
+          + include_support            = true
+          + include_tax                = true
+          + include_upfront            = true
+          + use_amortized              = false
+          + use_blended                = false
+        }
+
+      + notification {
+          + comparison_operator        = "GREATER_THAN"
+          + notification_type          = "ACTUAL"
+          + subscriber_email_addresses = [
+              + "<BUDGET_EMAIL>",
+            ]
+          + subscriber_sns_topic_arns  = []
+          + threshold                  = 100
+          + threshold_type             = "PERCENTAGE"
+        }
+      + notification {
+          + comparison_operator        = "GREATER_THAN"
+          + notification_type          = "ACTUAL"
+          + subscriber_email_addresses = [
+              + "<BUDGET_EMAIL>",
+            ]
+          + subscriber_sns_topic_arns  = []
+          + threshold                  = 50
+          + threshold_type             = "PERCENTAGE"
+        }
+      + notification {
+          + comparison_operator        = "GREATER_THAN"
+          + notification_type          = "FORECASTED"
+          + subscriber_email_addresses = [
+              + "<BUDGET_EMAIL>",
+            ]
+          + subscriber_sns_topic_arns  = []
+          + threshold                  = 100
+          + threshold_type             = "PERCENTAGE"
+        }
+    }
+
+  # aws_s3_bucket.tfstate will be created
+  + resource "aws_s3_bucket" "tfstate" {
+      + acceleration_status         = (known after apply)
+      + acl                         = (known after apply)
+      + arn                         = (known after apply)
+      + bucket                      = "chaos-room-tfstate-<ACCOUNT_ID>"
+      + bucket_domain_name          = (known after apply)
+      + bucket_namespace            = (known after apply)
+      + bucket_prefix               = (known after apply)
+      + bucket_region               = (known after apply)
+      + bucket_regional_domain_name = (known after apply)
+      + force_destroy               = true
+      + hosted_zone_id              = (known after apply)
+      + id                          = (known after apply)
+      + object_lock_enabled         = (known after apply)
+      + policy                      = (known after apply)
+      + region                      = "us-east-1"
+      + request_payer               = (known after apply)
+      + tags_all                    = {
+          + "Project" = "chaos-room"
+        }
+      + website_domain              = (known after apply)
+      + website_endpoint            = (known after apply)
+
+      + cors_rule (known after apply)
+
+      + grant (known after apply)
+
+      + lifecycle_rule (known after apply)
+
+      + logging (known after apply)
+
+      + object_lock_configuration (known after apply)
+
+      + replication_configuration (known after apply)
+
+      + server_side_encryption_configuration (known after apply)
+
+      + versioning (known after apply)
+
+      + website (known after apply)
+    }
+
+  # aws_s3_bucket_ownership_controls.tfstate will be created
+  + resource "aws_s3_bucket_ownership_controls" "tfstate" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = "us-east-1"
+
+      + rule {
+          + object_ownership = "BucketOwnerEnforced"
+        }
+    }
+
+  # aws_s3_bucket_policy.tfstate_tls_only will be created
+  + resource "aws_s3_bucket_policy" "tfstate_tls_only" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + policy = (known after apply)
+      + region = "us-east-1"
+    }
+
+  # aws_s3_bucket_public_access_block.tfstate will be created
+  + resource "aws_s3_bucket_public_access_block" "tfstate" {
+      + block_public_acls       = true
+      + block_public_policy     = true
+      + bucket                  = (known after apply)
+      + id                      = (known after apply)
+      + ignore_public_acls      = true
+      + region                  = "us-east-1"
+      + restrict_public_buckets = true
+    }
+
+  # aws_s3_bucket_server_side_encryption_configuration.tfstate will be created
+  + resource "aws_s3_bucket_server_side_encryption_configuration" "tfstate" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = "us-east-1"
+
+      + rule {
+          + blocked_encryption_types = (known after apply)
+          + bucket_key_enabled       = (known after apply)
+
+          + apply_server_side_encryption_by_default {
+              + kms_master_key_id = (known after apply)
+              + sse_algorithm     = "AES256"
+            }
+        }
+    }
+
+  # aws_s3_bucket_versioning.tfstate will be created
+  + resource "aws_s3_bucket_versioning" "tfstate" {
+      + bucket = (known after apply)
+      + id     = (known after apply)
+      + region = "us-east-1"
+
+      + versioning_configuration {
+          + mfa_delete = (known after apply)
+          + status     = "Enabled"
+        }
+    }
+
+Plan: 7 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + budget_name  = "chaos-room-monthly"
+  + state_bucket = "chaos-room-tfstate-<ACCOUNT_ID>"
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
