@@ -1,17 +1,22 @@
 // Simulated control room devices. Each component connects to AWS IoT Core as its own
 // registered thing (mTLS, X.509 cert), publishes telemetry every second, and listens on
-// its own command topic for sabotage / reset commands.
+// its own command topic for sabotage / reset / remediation / escalation commands.
 //
 // Telemetry never self-reports a fault: detection must come from the values alone.
+//
+// Latency is measured here, on one clock: from the publish of the first faulty reading to
+// the arrival of the remediation command. Each measurement is appended to latency.jsonl.
 
 import mqtt from 'mqtt';
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ENDPOINT = process.env.IOT_ENDPOINT;
 const INTERVAL_MS = Number(process.env.TELEMETRY_INTERVAL_MS ?? 1000);
-const CERT_DIR = join(dirname(fileURLToPath(import.meta.url)), 'certs');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const CERT_DIR = join(HERE, 'certs');
+const LATENCY_LOG = process.env.LATENCY_LOG ?? join(HERE, 'latency.jsonl');
 
 if (!ENDPOINT) {
   console.error('IOT_ENDPOINT is not set (use `npm start`)');
@@ -37,7 +42,7 @@ const COMPONENTS = {
   },
   alarm: {
     thing: 'chaos-room-alarm-system',
-    baseline: () => ({ armed: true, siren: 'off', lockdown: false, panel_ok: true, battery_pct: 98 }),
+    baseline: (s) => ({ armed: true, siren: s.siren ? 'on' : 'off', lockdown: s.lockdown, panel_ok: true, battery_pct: 98 }),
     faults: {},
   },
 };
@@ -45,7 +50,8 @@ const COMPONENTS = {
 const log = (component, msg) => console.log(`${new Date().toISOString()} [${component}] ${msg}`);
 
 function startDevice(component, spec) {
-  const state = { fault: null, seq: 0, published: 0 };
+  // faultTs: device time of the first faulty reading; siren/lockdown: alarm system outputs
+  const state = { fault: null, faultTs: null, siren: false, lockdown: false, seq: 0, published: 0 };
   const telemetryTopic = `chaos-room/telemetry/${component}`;
   const commandTopic = `chaos-room/cmd/${component}`;
 
@@ -61,7 +67,7 @@ function startDevice(component, spec) {
   });
 
   const publish = (qos = 0) => {
-    const metrics = state.fault ? spec.faults[state.fault]() : spec.baseline();
+    const metrics = state.fault ? spec.faults[state.fault]() : spec.baseline(state);
     const payload = { component, device: spec.thing, seq: ++state.seq, ts: Date.now(), ...metrics };
     client.publish(telemetryTopic, JSON.stringify(payload), { qos });
     state.published++;
@@ -86,15 +92,31 @@ function startDevice(component, spec) {
     } catch {
       return log(component, `ignored non-JSON command: ${buf}`);
     }
+    const receivedTs = Date.now();
     if (cmd.action === 'sabotage') {
       const fault = cmd.fault ?? Object.keys(spec.faults)[0];
       if (!spec.faults[fault]) return log(component, `ignored sabotage: no fault "${fault}" for this component`);
+      if (state.fault) return log(component, `ignored sabotage: already in fault "${state.fault}"`);
       state.fault = fault;
       // Publish immediately so the fault timestamp is the injection time, not the next tick.
       const p = publish(1);
+      state.faultTs = p.ts;
       log(component, `SABOTAGE ${fault} -> ${JSON.stringify(p)}`);
-    } else if (cmd.action === 'reset') {
+    } else if (cmd.action === 'remediate') {
+      if (!state.fault) return log(component, `remediate ${cmd.step} received while healthy (incident ${cmd.incident_id})`);
+      const latency = { component, fault: state.fault, step: cmd.step, incident_id: cmd.incident_id, fault_ts: state.faultTs, command_received_ts: receivedTs, latency_ms: receivedTs - state.faultTs };
+      appendFileSync(LATENCY_LOG, JSON.stringify(latency) + '\n');
       state.fault = null;
+      state.faultTs = null;
+      const p = publish(1);
+      log(component, `REMEDIATED by ${cmd.step} in ${latency.latency_ms} ms (incident ${cmd.incident_id}) -> ${JSON.stringify(p)}`);
+    } else if (cmd.action === 'raise_alarm' || cmd.action === 'lockdown') {
+      if (cmd.action === 'raise_alarm') state.siren = true;
+      else state.lockdown = true;
+      const p = publish(1);
+      log(component, `${cmd.action.toUpperCase()} (source ${cmd.source_component}, incident ${cmd.incident_id}) -> ${JSON.stringify(p)}`);
+    } else if (cmd.action === 'reset') {
+      Object.assign(state, { fault: null, faultTs: null, siren: false, lockdown: false });
       const p = publish(1);
       log(component, `RESET -> ${JSON.stringify(p)}`);
     } else {

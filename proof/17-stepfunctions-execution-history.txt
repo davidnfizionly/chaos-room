@@ -1,0 +1,118 @@
+# Step Functions Express execution history, from CloudWatch Logs (/aws/vendedlogs/states/chaos-room-<component>-remediation)
+# Concurrent pair: power 13:45:30.369-.512, cooling 13:45:30.448-.590 UTC (overlap 64 ms). Third: escalation ending in ExecutionFailed.
+# Command: aws logs filter-log-events --log-group-name <group> --filter-pattern '"<execution name>"'
+## cooling-overheat-9e05e716-8ad1-48a0-8dde-c280644a008e
+13:45:30.448	ExecutionStarted		
+13:45:30.456	TaskStateEntered	AcquireComponentLock	
+13:45:30.456	TaskScheduled	dynamodb	
+13:45:30.456	TaskStarted	dynamodb	
+13:45:30.470	TaskSucceeded	dynamodb	
+13:45:30.471	TaskStateExited	AcquireComponentLock	
+13:45:30.471	TaskStateEntered	LogDetected	
+13:45:30.471	TaskScheduled	dynamodb	
+13:45:30.471	TaskStarted	dynamodb	
+13:45:30.479	TaskSucceeded	dynamodb	
+13:45:30.479	TaskStateExited	LogDetected	
+13:45:30.479	TaskStateEntered	RunRemediation	
+13:45:30.480	TaskScheduled	lambda	
+13:45:30.480	TaskStarted	lambda	
+13:45:30.574	TaskSucceeded	lambda	
+13:45:30.575	TaskStateExited	RunRemediation	
+13:45:30.575	TaskStateEntered	LogRemediated	
+13:45:30.575	TaskScheduled	dynamodb	
+13:45:30.575	TaskStarted	dynamodb	
+13:45:30.580	TaskSucceeded	dynamodb	
+13:45:30.580	TaskStateExited	LogRemediated	
+13:45:30.580	TaskStateEntered	ReleaseComponentLock	
+13:45:30.580	TaskScheduled	dynamodb	
+13:45:30.580	TaskStarted	dynamodb	
+13:45:30.585	TaskSucceeded	dynamodb	
+13:45:30.585	TaskStateExited	ReleaseComponentLock	
+13:45:30.585	TaskStateEntered	LogResolved	
+13:45:30.585	TaskScheduled	dynamodb	
+13:45:30.585	TaskStarted	dynamodb	
+13:45:30.589	TaskSucceeded	dynamodb	
+13:45:30.589	TaskStateExited	LogResolved	
+13:45:30.590	ExecutionSucceeded		
+## power-overload-fda2ad2b-ad67-40de-9648-25d5d0328463
+13:45:30.369	ExecutionStarted		
+13:45:30.375	TaskStateEntered	AcquireComponentLock	
+13:45:30.375	TaskScheduled	dynamodb	
+13:45:30.387	TaskStarted	dynamodb	
+13:45:30.405	TaskSucceeded	dynamodb	
+13:45:30.405	TaskStateExited	AcquireComponentLock	
+13:45:30.405	TaskStateEntered	LogDetected	
+13:45:30.405	TaskScheduled	dynamodb	
+13:45:30.406	TaskStarted	dynamodb	
+13:45:30.415	TaskSucceeded	dynamodb	
+13:45:30.415	TaskStateExited	LogDetected	
+13:45:30.415	TaskStateEntered	RunRemediation	
+13:45:30.415	TaskScheduled	lambda	
+13:45:30.415	TaskStarted	lambda	
+13:45:30.496	TaskSucceeded	lambda	
+13:45:30.497	TaskStateExited	RunRemediation	
+13:45:30.497	TaskStateEntered	LogRemediated	
+13:45:30.497	TaskScheduled	dynamodb	
+13:45:30.497	TaskStarted	dynamodb	
+13:45:30.502	TaskSucceeded	dynamodb	
+13:45:30.502	TaskStateExited	LogRemediated	
+13:45:30.502	TaskStateEntered	ReleaseComponentLock	
+13:45:30.503	TaskScheduled	dynamodb	
+13:45:30.503	TaskStarted	dynamodb	
+13:45:30.506	TaskSucceeded	dynamodb	
+13:45:30.506	TaskStateExited	ReleaseComponentLock	
+13:45:30.507	TaskStateEntered	LogResolved	
+13:45:30.507	TaskScheduled	dynamodb	
+13:45:30.507	TaskStarted	dynamodb	
+13:45:30.512	TaskSucceeded	dynamodb	
+13:45:30.512	TaskStateExited	LogResolved	
+13:45:30.512	ExecutionSucceeded		
+## power-overload-aed2f14a-7b44-48d1-8ee8-72f7647c802d
+13:45:44.581	ExecutionStarted		
+13:45:44.587	TaskStateEntered	AcquireComponentLock	
+13:45:44.588	TaskScheduled	dynamodb	
+13:45:44.599	TaskStarted	dynamodb	
+13:45:44.616	TaskSucceeded	dynamodb	
+13:45:44.616	TaskStateExited	AcquireComponentLock	
+13:45:44.616	TaskStateEntered	LogDetected	
+13:45:44.617	TaskScheduled	dynamodb	
+13:45:44.617	TaskStarted	dynamodb	
+13:45:44.625	TaskSucceeded	dynamodb	
+13:45:44.625	TaskStateExited	LogDetected	
+13:45:44.625	TaskStateEntered	RunRemediation	
+13:45:44.625	TaskScheduled	lambda	
+13:45:44.625	TaskStarted	lambda	
+13:45:44.717	TaskFailed	lambda	TransferSwitchFailed
+13:45:44.717	TaskStateExited	RunRemediation	
+13:45:44.717	TaskStateEntered	LogActionFailed	
+13:45:44.717	TaskScheduled	dynamodb	
+13:45:44.718	TaskStarted	dynamodb	
+13:45:44.727	TaskSucceeded	dynamodb	
+13:45:44.727	TaskStateExited	LogActionFailed	
+13:45:44.727	TaskStateEntered	RaiseAlarm	
+13:45:44.727	TaskScheduled	lambda	
+13:45:44.727	TaskStarted	lambda	
+13:45:44.805	TaskSucceeded	lambda	
+13:45:44.806	TaskStateExited	RaiseAlarm	
+13:45:44.806	TaskStateEntered	LogAlarmRaised	
+13:45:44.806	TaskScheduled	dynamodb	
+13:45:44.806	TaskStarted	dynamodb	
+13:45:44.820	TaskSucceeded	dynamodb	
+13:45:44.820	TaskStateExited	LogAlarmRaised	
+13:45:44.820	TaskStateEntered	EngageLockdown	
+13:45:44.821	TaskScheduled	lambda	
+13:45:44.821	TaskStarted	lambda	
+13:45:44.978	TaskSucceeded	lambda	
+13:45:44.978	TaskStateExited	EngageLockdown	
+13:45:44.978	TaskStateEntered	LogLockdownEngaged	
+13:45:44.979	TaskScheduled	dynamodb	
+13:45:44.979	TaskStarted	dynamodb	
+13:45:44.983	TaskSucceeded	dynamodb	
+13:45:44.983	TaskStateExited	LogLockdownEngaged	
+13:45:44.983	TaskStateEntered	LogEscalated	
+13:45:44.983	TaskScheduled	dynamodb	
+13:45:44.983	TaskStarted	dynamodb	
+13:45:44.987	TaskSucceeded	dynamodb	
+13:45:44.987	TaskStateExited	LogEscalated	
+13:45:44.987	FailStateEntered	RemediationFailed	
+13:45:44.987	ExecutionFailed		RemediationFailed

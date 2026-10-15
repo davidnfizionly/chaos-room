@@ -21,3 +21,23 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 - **What happened:** right after the first run, `PublishIn.Success` for the 13:19 UTC minute showed 120, while 3 devices at 1 message/second should give about 180. Only about 3 seconds of reconnection were visible in the simulator log, which could not explain the gap.
 - **Root cause:** not a dropped-message problem. CloudWatch was still aggregating that minute. Re-queried 6 minutes later, the same minute showed 180, and every untouched full minute of a second run showed exactly 180.
 - **Fix:** none needed in the system. Lesson: never read the most recent 1-2 minutes of a CloudWatch metric as final, and re-query before drawing a conclusion.
+
+## Phase 3
+
+### Every sabotage opened two incidents instead of one
+
+- **What happened:** the first `single cooling` and `single power` runs each reported 2 incidents. Both were remediated, so the second one sent a second `close_valve` to a device that was already healthy (simulator log: `remediate received while healthy`).
+- **Root cause:** the dedup lock accepted a new incident for any reading ingested after the previous incident released its lock. The second incident was triggered by reading seq 60, published by the device 469 ms after the fault, i.e. before the remediation command reached it (+567 ms on the device clock), but ingested ~200 ms after the workflow had already released the lock. The design assumed "lock released" meant "device fixed", but the command still has a ~300 ms round trip from us-east-1 to the device in Nairobi.
+- **Fix:** on release the workflow writes `reopen_after = now + 1.5 s` and a reading opens a new incident only if it was ingested after that (ADR 008 revised). A fault that genuinely persists is still detected on the next 1 s reading.
+
+### Step Functions definition rejected after an edit (JSON escaping)
+
+- **What happened:** `terraform plan` failed with `INVALID_JSON_DESCRIPTION: Unexpected character ('e')` after adding a JSONata expression to trim Lambda stack traces from the logged failure cause.
+- **Root cause:** the expression contained `'"errorMessage"'`; the inner double quotes were not escaped inside the JSON string of the ASL template. The same expression had passed in `aws stepfunctions test-state` because there it was escaped correctly.
+- **Fix:** match on `'errorMessage'` without inner quotes. Lesson: validate the rendered template, not just the expression.
+
+### A component in lockdown starts one (suppressed) workflow per second
+
+- **What happened:** after the cooling escalation test, the cooling log group showed 212 executions for about a dozen real incidents, 206 of them ending in `SuppressedDuplicate`.
+- **Root cause:** by design, a component in lockdown keeps its lock and the simulated device keeps publishing faulty readings every second. The IoT rule has no knowledge of the lock, so every reading starts an Express execution, which stops at its first state.
+- **Fix:** none for now. It is the intended behavior (no retry storm, no duplicate incidents, nothing written to the audit log) and the cost is about 1 USD per million executions. Noted so the execution count is not misread later.

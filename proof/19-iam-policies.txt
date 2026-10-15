@@ -1,0 +1,129 @@
+# Least-privilege inline policies (aws iam get-role-policy)
+## chaos-room-action-close-valve
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogStream"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-1:<ACCOUNT_ID>:log-group:/aws/lambda/chaos-room-close-valve:*",
+            "Sid": "WriteOwnLogs"
+        },
+        {
+            "Action": "iot:Publish",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/cmd/cooling",
+            "Sid": "PublishOwnCommandTopic"
+        },
+        {
+            "Action": "dynamodb:GetItem",
+            "Condition": {
+                "ForAllValues:StringEquals": {
+                    "dynamodb:LeadingKeys": "INJECT#cooling"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/chaos-room-state",
+            "Sid": "ReadOwnFailureInjectionFlag"
+        }
+    ]
+}
+## chaos-room-action-raise-alarm
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogStream"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-1:<ACCOUNT_ID>:log-group:/aws/lambda/chaos-room-raise-alarm:*",
+            "Sid": "WriteOwnLogs"
+        },
+        {
+            "Action": "iot:Publish",
+            "Effect": "Allow",
+            "Resource": "arn:aws:iot:us-east-1:<ACCOUNT_ID>:topic/chaos-room/cmd/alarm",
+            "Sid": "PublishOwnCommandTopic"
+        }
+    ]
+}
+## chaos-room-cooling-remediation-sfn
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "lambda:InvokeFunction",
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:chaos-room-raise-alarm",
+                "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:chaos-room-lockdown",
+                "arn:aws:lambda:us-east-1:<ACCOUNT_ID>:function:chaos-room-close-valve"
+            ],
+            "Sid": "InvokeOwnActions"
+        },
+        {
+            "Action": "dynamodb:PutItem",
+            "Effect": "Allow",
+            "Resource": "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/chaos-room-incident-log",
+            "Sid": "AppendToIncidentLog"
+        },
+        {
+            "Action": [
+                "dynamodb:UpdateItem",
+                "dynamodb:PutItem"
+            ],
+            "Condition": {
+                "ForAllValues:StringEquals": {
+                    "dynamodb:LeadingKeys": "LOCK#cooling"
+                }
+            },
+            "Effect": "Allow",
+            "Resource": "arn:aws:dynamodb:us-east-1:<ACCOUNT_ID>:table/chaos-room-state",
+            "Sid": "ManageOwnComponentLock"
+        },
+        {
+            "Action": [
+                "logs:UpdateLogDelivery",
+                "logs:PutResourcePolicy",
+                "logs:ListLogDeliveries",
+                "logs:GetLogDelivery",
+                "logs:DescribeResourcePolicies",
+                "logs:DescribeLogGroups",
+                "logs:DeleteLogDelivery",
+                "logs:CreateLogDelivery"
+            ],
+            "Effect": "Allow",
+            "Resource": "*",
+            "Sid": "ExecutionLogDelivery"
+        }
+    ]
+}
+## chaos-room-iot-rules
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "states:StartExecution",
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:states:us-east-1:<ACCOUNT_ID>:stateMachine:chaos-room-power-remediation",
+                "arn:aws:states:us-east-1:<ACCOUNT_ID>:stateMachine:chaos-room-cooling-remediation"
+            ],
+            "Sid": "StartRemediationWorkflows"
+        },
+        {
+            "Action": [
+                "logs:PutLogEvents",
+                "logs:CreateLogStream"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-1:<ACCOUNT_ID>:log-group:/chaos-room/iot-rule-errors:*",
+            "Sid": "WriteRuleErrors"
+        }
+    ]
+}

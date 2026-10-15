@@ -1,0 +1,12 @@
+# Fix: settle window on lock release (ADR 008 revised). Plan: 0 add, 3 change, 0 destroy
+                          ~ ConditionExpression       = "attribute_not_exists(id) OR released_at < :ingest" -> "attribute_not_exists(id) OR reopen_after < :ingest"
+                              + ":reopen" = {
+                          ~ UpdateExpression          = "SET released_at = :now" -> "SET reopen_after = :reopen"
+                          ~ ConditionExpression       = "attribute_not_exists(id) OR released_at < :ingest" -> "attribute_not_exists(id) OR reopen_after < :ingest"
+                              + ":reopen" = {
+                          ~ UpdateExpression          = "SET released_at = :now" -> "SET reopen_after = :reopen"
+Plan: 0 to add, 3 to change, 0 to destroy.
+
+  "cooling" = "chaos-room-cooling-unit"
+  "power" = "chaos-room-power-bus"
+}

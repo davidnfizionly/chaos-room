@@ -1,0 +1,26 @@
+# Scenario: single sabotage, after the fix. Command: npm run scenario -- single <component>
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to cooling
+
+Incident cooling-overheat-4f700f2d-af19-4b10-a4db-6e0c9fed246d (cooling, overheat)
+  reading: {"component":"cooling","device":"chaos-room-cooling-unit","seq":390,"ts":1792071900796,"temp_c":93.44,"coolant_flow_lpm":5.75,"pump_rpm":1447,"ingest_ts":1792071900629,"fault_type":"overheat","execution_started":"2026-10-15T13:45:00.726Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  136 ms  DETECTED          rule matched, execution started 2026-10-15T13:45:00.726Z
+    +  404 ms  REMEDIATED        close_valve (lambda 186 ms) -> valve closed
+    +  415 ms  RESOLVED          {"ingest_to_resolved_ms":415,"ingest_to_action_done_ms":388}
+  AWS side: ingest -> remediation action done = 388 ms
+  Device clock: fault published -> remediation command received = 678 ms
+  Incidents opened for cooling in this run (3 s after resolution): 1 (repeated fault readings deduplicated)
+
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to power
+
+Incident power-overload-7c193cde-6cdd-489d-87cc-29ffcc1edba4 (power, overload)
+  reading: {"component":"power","device":"chaos-room-power-bus","seq":399,"ts":1792071911729,"voltage_v":194.95,"load_pct":108.59,"frequency_hz":49.619,"ingest_ts":1792071911564,"fault_type":"overload","execution_started":"2026-10-15T13:45:11.627Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  105 ms  DETECTED          rule matched, execution started 2026-10-15T13:45:11.627Z
+    +  369 ms  REMEDIATED        reroute_power (lambda 197 ms) -> load moved to backup feed
+    +  398 ms  RESOLVED          {"ingest_to_resolved_ms":398,"ingest_to_action_done_ms":366}
+  AWS side: ingest -> remediation action done = 366 ms
+  Device clock: fault published -> remediation command received = 627 ms
+  Incidents opened for power in this run (3 s after resolution): 1 (repeated fault readings deduplicated)

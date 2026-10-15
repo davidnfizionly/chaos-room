@@ -1,0 +1,26 @@
+# Scenario: concurrent incidents. Command: npm run scenario -- concurrent
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to cooling and power at the same time
+
+Incident cooling-overheat-9e05e716-8ad1-48a0-8dde-c280644a008e (cooling, overheat)
+  reading: {"component":"cooling","device":"chaos-room-cooling-unit","seq":424,"ts":1792071930533,"temp_c":91.33,"coolant_flow_lpm":6.05,"pump_rpm":1446,"ingest_ts":1792071930370,"fault_type":"overheat","execution_started":"2026-10-15T13:45:30.448Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  101 ms  DETECTED          rule matched, execution started 2026-10-15T13:45:30.448Z
+    +  205 ms  REMEDIATED        close_valve (lambda 72 ms) -> valve closed
+    +  215 ms  RESOLVED          {"ingest_to_resolved_ms":215,"ingest_to_action_done_ms":202}
+  AWS side: ingest -> remediation action done = 202 ms
+
+Incident power-overload-fda2ad2b-ad67-40de-9648-25d5d0328463 (power, overload)
+  reading: {"component":"power","device":"chaos-room-power-bus","seq":421,"ts":1792071930455,"voltage_v":194.75,"load_pct":108.02,"frequency_hz":49.59,"ingest_ts":1792071930292,"fault_type":"overload","execution_started":"2026-10-15T13:45:30.369Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  113 ms  DETECTED          rule matched, execution started 2026-10-15T13:45:30.369Z
+    +  205 ms  REMEDIATED        reroute_power (lambda 52 ms) -> load moved to backup feed
+    +  215 ms  RESOLVED          {"ingest_to_resolved_ms":215,"ingest_to_action_done_ms":202}
+  AWS side: ingest -> remediation action done = 202 ms
+  Device clock: fault published -> remediation command received = 427 ms
+  Device clock: fault published -> remediation command received = 454 ms
+
+Concurrency: 2 independent executions, cooling-overheat-9e05e716-8ad1-48a0-8dde-c280644a008e / power-overload-fda2ad2b-ad67-40de-9648-25d5d0328463
+  logged windows overlap by 36 ms (ran concurrently)
+  Incidents opened for cooling in this run (3 s after resolution): 1 (repeated fault readings deduplicated)
+  Incidents opened for power in this run (3 s after resolution): 1 (repeated fault readings deduplicated)

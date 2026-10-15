@@ -1,0 +1,222 @@
+{
+  "Comment": "Remediation for ${component}: lock, log detection, run ${action_name}, log result. On action failure: alarm + lockdown escalation.",
+  "QueryLanguage": "JSONata",
+  "StartAt": "AcquireComponentLock",
+  "States": {
+    "AcquireComponentLock": {
+      "Comment": "One open incident per component. Fault telemetry ingested before the previous incident's settle window ended is a duplicate of that incident (readings already in flight before the fix reached the device).",
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${state_table}",
+        "Item": {
+          "id": { "S": "LOCK#${component}" },
+          "incident_id": { "S": "{% $states.context.Execution.Name %}" },
+          "acquired_at": { "N": "{% $string($millis()) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(id) OR reopen_after < :ingest",
+        "ExpressionAttributeValues": { ":ingest": { "N": "{% $string($states.input.ingest_ts) %}" } }
+      },
+      "Assign": {
+        "incident": "{% $states.context.Execution.Name %}",
+        "reading": "{% $states.input %}"
+      },
+      "Catch": [
+        { "ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"], "Next": "SuppressedDuplicate" }
+      ],
+      "Next": "LogDetected"
+    },
+    "SuppressedDuplicate": {
+      "Type": "Succeed",
+      "Output": { "suppressed": true, "reason": "an incident for ${component} is already open or covered this reading" }
+    },
+    "LogDetected": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#1' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "DETECTED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string($merge([$reading, {'execution_started': $states.context.Execution.StartTime}])) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "RunRemediation"
+    },
+    "RunRemediation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${action_lambda_arn}",
+        "Payload": { "incident_id": "{% $incident %}", "component": "${component}" }
+      },
+      "Assign": { "action": "{% $states.result.Payload %}" },
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 2,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        { "ErrorEquals": ["States.ALL"], "Assign": { "failure": "{% $states.errorOutput %}" }, "Next": "LogActionFailed" }
+      ],
+      "Next": "LogRemediated"
+    },
+    "LogRemediated": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#2' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "REMEDIATED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string($action) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "ReleaseComponentLock"
+    },
+    "ReleaseComponentLock": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Arguments": {
+        "TableName": "${state_table}",
+        "Key": { "id": { "S": "LOCK#${component}" } },
+        "UpdateExpression": "SET reopen_after = :reopen",
+        "ConditionExpression": "incident_id = :me",
+        "ExpressionAttributeValues": {
+          ":reopen": { "N": "{% $string($millis() + ${settle_ms}) %}" },
+          ":me": { "S": "{% $incident %}" }
+        }
+      },
+      "Next": "LogResolved"
+    },
+    "LogResolved": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#3' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "RESOLVED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string({'ingest_to_resolved_ms': $millis() - $reading.ingest_ts, 'ingest_to_action_done_ms': $action.finished_ms - $reading.ingest_ts}) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Output": { "incident_id": "{% $incident %}", "outcome": "RESOLVED" },
+      "End": true
+    },
+    "LogActionFailed": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#2' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "ACTION_FAILED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string({'action': '${action_name}', 'error': $failure.Error, 'cause': $contains($failure.Cause, 'errorMessage') ? $parse($failure.Cause).errorMessage : $failure.Cause}) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "RaiseAlarm"
+    },
+    "RaiseAlarm": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${raise_alarm_arn}",
+        "Payload": { "incident_id": "{% $incident %}", "component": "${component}" }
+      },
+      "Assign": { "alarm": "{% $states.result.Payload %}" },
+      "Next": "LogAlarmRaised"
+    },
+    "LogAlarmRaised": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#3' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "ALARM_RAISED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string($alarm) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "EngageLockdown"
+    },
+    "EngageLockdown": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Arguments": {
+        "FunctionName": "${lockdown_arn}",
+        "Payload": { "incident_id": "{% $incident %}", "component": "${component}" }
+      },
+      "Assign": { "lockdown": "{% $states.result.Payload %}" },
+      "Next": "LogLockdownEngaged"
+    },
+    "LogLockdownEngaged": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#4' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "LOCKDOWN_ENGAGED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string($lockdown) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "LogEscalated"
+    },
+    "LogEscalated": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:putItem",
+      "Arguments": {
+        "TableName": "${log_table}",
+        "Item": {
+          "pk": { "S": "EVENTS" },
+          "sk": { "S": "{% $string($millis()) & '#' & $incident & '#5' %}" },
+          "incident_id": { "S": "{% $incident %}" },
+          "component": { "S": "${component}" },
+          "event": { "S": "ESCALATED" },
+          "at_ms": { "N": "{% $string($millis()) %}" },
+          "detail": { "S": "{% $string({'message': 'Remediation failed. Alarm raised and lockdown engaged. Component lock kept until manual reset.', 'ingest_to_escalated_ms': $millis() - $reading.ingest_ts}) %}" }
+        },
+        "ConditionExpression": "attribute_not_exists(sk)"
+      },
+      "Next": "RemediationFailed"
+    },
+    "RemediationFailed": {
+      "Type": "Fail",
+      "Error": "RemediationFailed",
+      "Cause": "${action_name} failed on ${component}; escalated to alarm and lockdown"
+    }
+  }
+}

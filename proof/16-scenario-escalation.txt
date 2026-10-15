@@ -1,0 +1,32 @@
+# Scenario: remediation failure / escalation. Commands: npm run scenario -- escalation cooling | power
+## cooling (before the cause-trimming fix, full Lambda stack in cause)
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+failure injection set: INJECT#cooling.actuator_stuck = true
+sabotage sent to cooling
+
+Incident cooling-overheat-97a84087-3a18-41e7-b3a0-8970d9e7d806 (cooling, overheat)
+  reading: {"component":"cooling","device":"chaos-room-cooling-unit","seq":181,"ts":1792071693231,"temp_c":91.35,"coolant_flow_lpm":5.45,"pump_rpm":1447,"ingest_ts":1792071693076,"fault_type":"overheat","execution_started":"2026-10-15T13:41:33.158Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  121 ms  DETECTED          rule matched, execution started 2026-10-15T13:41:33.158Z
+    +  304 ms  ACTION_FAILED     close_valve ValveDidNotClose: {"errorType":"ValveDidNotClose","errorMessage":"Valve position feedback: still OPEN after close command","trace":["ValveDidNotClose: Valve position feedback: still OPEN after close command","    at BufferedInvokeProcessor.handler (file:///var/task/index.mjs:20:17)","    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)","    at async BufferedInvokeProcessor.processInvoke (file:///var/runtime/index.mjs:1150:22)","    at async _Runtime.processSingleConcurrent (file:///var/runtime/index.mjs:1237:7)","    at async _Runtime.start (file:///var/runtime/index.mjs:1224:7)","    at async ignition (file:///var/runtime/index.mjs:1724:5)"],"requestId":"bfa766b7-6924-4c7c-b0fd-89f9be515ab1"}
+    + 1082 ms  ALARM_RAISED      raise_alarm (lambda 412 ms) -> siren on (source: cooling)
+    + 1931 ms  LOCKDOWN_ENGAGED  lockdown (lambda 378 ms) -> lockdown engaged (source: cooling)
+    + 1935 ms  ESCALATED         Remediation failed. Alarm raised and lockdown engaged. Component lock kept until manual reset.
+  Incidents opened for cooling in this run (3 s after resolution): 1 (repeated fault readings deduplicated)
+  Component lock is kept and the device stays faulty until `node scenario.mjs reset`.
+
+## power
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+failure injection set: INJECT#power.actuator_stuck = true
+sabotage sent to power
+
+Incident power-overload-aed2f14a-7b44-48d1-8ee8-72f7647c802d (power, overload)
+  reading: {"component":"power","device":"chaos-room-power-bus","seq":438,"ts":1792071944637,"voltage_v":195.49,"load_pct":107.63,"frequency_hz":49.599,"ingest_ts":1792071944474,"fault_type":"overload","execution_started":"2026-10-15T13:45:44.581Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  142 ms  DETECTED          rule matched, execution started 2026-10-15T13:45:44.581Z
+    +  243 ms  ACTION_FAILED     reroute_power TransferSwitchFailed: Transfer switch feedback: still on primary feed after reroute command
+    +  332 ms  ALARM_RAISED      raise_alarm (lambda 35 ms) -> siren on (source: power)
+    +  504 ms  LOCKDOWN_ENGAGED  lockdown (lambda 137 ms) -> lockdown engaged (source: power)
+    +  509 ms  ESCALATED         Remediation failed. Alarm raised and lockdown engaged. Component lock kept until manual reset.
+  Incidents opened for power in this run (3 s after resolution): 1 (repeated fault readings deduplicated)
+  Component lock is kept and the device stays faulty until `node scenario.mjs reset`.

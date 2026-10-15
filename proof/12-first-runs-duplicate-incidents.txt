@@ -1,0 +1,43 @@
+# First runs, before the dedup fix: 2 incidents per sabotage (see docs/DEVLOG.md, Phase 3). Kept as evidence.
+
+## npm run scenario -- single (run s1)
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to cooling
+
+Incident cooling-overheat-bb0511c9-271d-4745-98e3-f46e56a8fe16 (cooling, overheat)
+  reading: {"component":"cooling","device":"chaos-room-cooling-unit","seq":33,"ts":1792071551738,"temp_c":91.03,"coolant_flow_lpm":6,"pump_rpm":1455,"ingest_ts":1792071551686,"fault_type":"overheat","execution_started":"2026-10-15T13:39:11.797Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  147 ms  DETECTED          rule matched, execution started 2026-10-15T13:39:11.797Z
+    + 1185 ms  REMEDIATED        close_valve (lambda 604 ms) -> valve closed
+    + 1195 ms  RESOLVED          {"ingest_to_resolved_ms":1195,"ingest_to_action_done_ms":1180}
+  AWS side: ingest -> remediation action done = 1180 ms
+  Device clock: fault published -> remediation command received = 1559 ms
+  Incidents opened for cooling in this run (3 s after resolution): 1 (repeated fault readings deduplicated)
+
+## npm run scenario -- single (run s2)
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to cooling
+
+Incident cooling-overheat-e79c8dda-cb09-4c20-8434-1300f443d668 (cooling, overheat)
+  reading: {"component":"cooling","device":"chaos-room-cooling-unit","seq":59,"ts":1792071575166,"temp_c":91.3,"coolant_flow_lpm":6.82,"pump_rpm":1453,"ingest_ts":1792071575006,"fault_type":"overheat","execution_started":"2026-10-15T13:39:35.127Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  159 ms  DETECTED          rule matched, execution started 2026-10-15T13:39:35.127Z
+    +  257 ms  REMEDIATED        close_valve (lambda 57 ms) -> valve closed
+    +  267 ms  RESOLVED          {"ingest_to_resolved_ms":267,"ingest_to_action_done_ms":255}
+  AWS side: ingest -> remediation action done = 255 ms
+  Device clock: fault published -> remediation command received = 567 ms
+  Incidents opened for cooling in this run (3 s after resolution): 2
+
+## npm run scenario -- single (run s3)
+reset: devices back to baseline, alarm cleared, locks and failure injections removed
+sabotage sent to power
+
+Incident power-overload-425f6b81-6cfa-441f-b51b-2359834b07c8 (power, overload)
+  reading: {"component":"power","device":"chaos-room-power-bus","seq":69,"ts":1792071586221,"voltage_v":197.8,"load_pct":107.83,"frequency_hz":49.648,"ingest_ts":1792071586067,"fault_type":"overload","execution_started":"2026-10-15T13:39:46.195Z"}
+  timeline (ms after IoT Core ingested the faulty reading, AWS clocks):
+    +  164 ms  DETECTED          rule matched, execution started 2026-10-15T13:39:46.195Z
+    + 1260 ms  REMEDIATED        reroute_power (lambda 620 ms) -> load moved to backup feed
+    + 1268 ms  RESOLVED          {"ingest_to_resolved_ms":1268,"ingest_to_action_done_ms":1256}
+  AWS side: ingest -> remediation action done = 1256 ms
+  Device clock: fault published -> remediation command received = 1607 ms
+  Incidents opened for power in this run (3 s after resolution): 2

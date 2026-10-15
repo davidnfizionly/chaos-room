@@ -25,6 +25,9 @@ certs/
 node_modules/
 dist/
 
+# Raw simulator measurements (curated copies go to proof/)
+simulator/*.jsonl
+
 # Lambda build artifacts
 *.zip
 build/
