@@ -41,3 +41,23 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 - **What happened:** after the cooling escalation test, the cooling log group showed 212 executions for about a dozen real incidents, 206 of them ending in `SuppressedDuplicate`.
 - **Root cause:** by design, a component in lockdown keeps its lock and the simulated device keeps publishing faulty readings every second. The IoT rule has no knowledge of the lock, so every reading starts an Express execution, which stops at its first state.
 - **Fix:** none for now. It is the intended behavior (no retry storm, no duplicate incidents, nothing written to the audit log) and the cost is about 1 USD per million executions. Noted so the execution count is not misread later.
+
+## Phase 4
+
+### Dashboard showed "locked out" during a normal, successful remediation
+
+- **What happened:** polling `GET /state` 400 ms after a sabotage returned `LOCKED_OUT` for both components, then `HEALTHY` 400 ms later. A viewer would have seen "fix failed" flash on every successful incident.
+- **Root cause:** the read model treated any lock without `reopen_after` as an escalated incident. But a lock has no `reopen_after` while its workflow is still running too; only the escalation path keeps it that way permanently.
+- **Fix:** a component is `LOCKED_OUT` only if its open incident has an `ESCALATED` event in the log; otherwise it is `FIXING`.
+
+### Headless browser could not start in WSL
+
+- **What happened:** Playwright's Chromium headless shell installed but failed to launch (`Target page, context or browser has been closed`).
+- **Root cause:** `ldd` showed missing system libraries in the WSL Ubuntu image: `libnss3`, `libnssutil3`, `libnspr4`, `libasound2`. Installing them needs `sudo`, which requires an interactive password.
+- **Fix:** install them with `sudo apt-get install -y libnss3 libnspr4 libasound2t64`.
+
+### The fix was faster than the dashboard could show it
+
+- **What happened:** in the browser test, a cooling sabotage was remediated 265 ms after the fault reached AWS. With a 1 s poll, the tile went Healthy -> Healthy: a viewer never saw the fault at all. Another run showed the power tile flash `FAULT` right after `Fixing...`.
+- **Root cause:** the poll period is longer than the whole incident. The `FAULT` flash came from the faulty reading mirrored just after the lock was released, i.e. inside the settle window (same root cause as the duplicate incidents in Phase 3).
+- **Fix:** a resolved incident stays on its tile for 8 s ("Fault detected and fixed in N ms"), a status message rather than an animation; and a faulty reading inside the settle window is shown as `Fixing...`, not `FAULT`.

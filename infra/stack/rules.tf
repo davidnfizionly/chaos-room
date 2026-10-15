@@ -32,6 +32,16 @@ data "aws_iam_policy_document" "iot_rules" {
     actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
     resources = ["${aws_cloudwatch_log_group.rule_errors.arn}:*"]
   }
+  statement {
+    sid       = "MirrorLiveTelemetry"
+    actions   = ["dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.state.arn]
+    condition {
+      test     = "ForAllValues:StringLike"
+      variable = "dynamodb:LeadingKeys"
+      values   = ["LIVE#*"]
+    }
+  }
 }
 
 resource "aws_iam_role_policy" "iot_rules" {

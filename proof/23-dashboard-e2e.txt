@@ -1,0 +1,17 @@
+# Headless Chromium (Playwright) end-to-end run against npm run dev, final version. Screenshots in proof/dashboard-e2e/
+14:16:03.590 OK  connected (1047 ms)
+14:16:03.676 OK  baseline healthy (8 ms)
+14:16:10.822 cooling status transitions: Healthy@3ms -> Fixing...@1707ms -> Healthy@2872ms
+14:16:10.827 OK  cooling trace says Fixed (5 ms)
+14:16:10.832 cooling trace headline: Fixed 219 ms after the fault reached AWS
+14:16:10.837 OK  cooling tile shows recent fix (5 ms)
+14:16:10.841 cooling tile banner: Fault detected and fixed in 219 ms
+14:16:17.553 power status transitions: Healthy@3ms
+14:16:17.618 OK  both traces Fixed (65 ms)
+14:16:17.644 concurrent headlines: Fixed 198 ms after the fault reached AWS | Fixed 151 ms after the fault reached AWS
+14:16:22.603 OK  cooling locked out + alarm lockdown (2247 ms)
+14:16:22.605 escalation headline: Fix failed - escalated in 353 ms
+14:16:26.530 OK  back to healthy after reset (3734 ms)
+14:16:27.900 phone width horizontal overflow px: 0
+14:16:28.025 timeline rows: 15
+14:16:28.025 console errors: none

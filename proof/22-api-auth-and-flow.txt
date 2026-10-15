@@ -1,0 +1,36 @@
+# API key enforcement (curl against the HTTP API; the key value is never printed)
+## GET /state without key
+401
+## GET /state with wrong key
+{"error":"missing or invalid x-api-key"}
+401
+## POST /sabotage without key
+{"error":"missing or invalid x-api-key"}
+401
+## POST /sabotage invalid component (with key)
+{"error":"components must be a non-empty subset of cooling, power"}
+400
+## GET /state with key (components only)
+{"c":"cooling","status":"HEALTHY","reading":{"ts":1792072662970,"pump_rpm":1455,"temp_c":22.09,"component":"cooling","device":"chaos-room-cooling-unit","ingest_ts":1792072662836,"seq":8,"coolant_flow_lpm":40.42}}
+{"c":"power","status":"HEALTHY","reading":{"ts":1792072662970,"load_pct":52.8,"component":"power","voltage_v":229.76,"frequency_hz":50.018,"device":"chaos-room-power-bus","ingest_ts":1792072662840,"seq":8}}
+{"c":"alarm","status":"QUIET","reading":{"ts":1792072662970,"panel_ok":true,"component":"alarm","device":"chaos-room-alarm-system","lockdown":false,"armed":true,"ingest_ts":1792072662838,"seq":8,"battery_pct":98,"siren":"off"}}
+
+# Full flow through the dashboard dev proxy (client sends no key). Statuses polled every 400 ms.
+# Note: LOCKED_OUT during a normal fix at t+400ms was the read-model bug fixed afterwards (DEVLOG Phase 4).
+## via dashboard proxy (no key sent by the client)
+{"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["power:ESCALATED","power:LOCKDOWN_ENGAGED","power:ALARM_RAISED"]}
+## POST /api/sabotage both
+{"sabotaged":["cooling","power"],"fail_fix":false,"sent_at":1792072752512}
+t+400ms {"c":"LOCKED_OUT","p":"LOCKED_OUT","a":"QUIET","last":["power:DETECTED","cooling:DETECTED","power:ESCALATED"]}
+t+800ms {"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["power:RESOLVED","power:REMEDIATED","cooling:RESOLVED"]}
+t+1200ms {"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["power:RESOLVED","power:REMEDIATED","cooling:RESOLVED"]}
+t+1600ms {"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["power:RESOLVED","power:REMEDIATED","cooling:RESOLVED"]}
+## after 2s
+{"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["power:RESOLVED","power:REMEDIATED","cooling:RESOLVED"]}
+## POST /api/sabotage cooling fail_fix
+{"sabotaged":["cooling"],"fail_fix":true,"sent_at":1792072763574}
+## after 3s
+{"c":"LOCKED_OUT","p":"HEALTHY","a":"LOCKDOWN","last":["cooling:ESCALATED","cooling:LOCKDOWN_ENGAGED","cooling:ALARM_RAISED"]}
+## POST /api/reset
+{"reset":true}
+{"c":"HEALTHY","p":"HEALTHY","a":"QUIET","last":["cooling:ESCALATED","cooling:LOCKDOWN_ENGAGED","cooling:ALARM_RAISED"]}
