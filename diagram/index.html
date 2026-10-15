@@ -72,11 +72,11 @@
     <!-- Measured figures -->
     <g id="metrics">
       <rect x="940" y="630" width="630" height="192" rx="10" fill="#f8fafc" stroke="#0b1220" stroke-width="2"/>
-      <text x="960" y="664" font-size="22" font-weight="700" fill="#0b1220">Measured in Phase 5 (warm Lambda)</text>
-      <text x="960" y="700" font-size="21" fill="#0b1220">Fix received by the device: median 445 ms</text>
-      <text x="960" y="734" font-size="21" fill="#0b1220">Inside AWS, ingest to fix sent: median 173 ms</text>
+      <text x="960" y="664" font-size="22" font-weight="700" fill="#0b1220">Measured in Phase 5, warm Lambda (medians)</text>
+      <text x="960" y="700" font-size="21" fill="#0b1220">Fix received by the device: 437 ms</text>
+      <text x="960" y="734" font-size="21" fill="#0b1220">Inside AWS, ingest to fix sent: 172 ms</text>
       <text x="960" y="768" font-size="21" fill="#0b1220">Cold first call, new container: about 1.5 s</text>
-      <text x="960" y="802" font-size="21" fill="#0b1220">Escalation to alarm and lockdown: median 286 ms</text>
+      <text x="960" y="802" font-size="21" fill="#0b1220">Escalation to alarm and lockdown: 285 ms</text>
     </g>
 
     <!-- Dots layer -->
@@ -204,7 +204,7 @@ const SCENARIOS = {
       hl: { sim: C.fault, sfn: C.fix, lambda: C.fix, iot: C.fix }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.fix }] },
     { cap: ['REMEDIATED and RESOLVED are logged, the lock is released,', 'and the execution history is kept in CloudWatch.'],
       hl: { sim: C.fix, sfn: C.log, log: C.log, state: C.log, cw: C.log }, chains: [{ path: ['sfn_log'], color: C.log }, { path: ['sfn_state'], color: C.log }, { path: ['sfn_cw'], color: C.log }] },
-    { cap: ['Fixed. Median 445 ms from faulty reading to fix received on the device,', '173 ms inside AWS (warm). A first call on a new Lambda container took about 1.5 s.'],
+    { cap: ['Fixed. Warm median: 437 ms from faulty reading to fix received on the device,', '172 ms inside AWS. A first call on a new Lambda container took about 1.5 s.'],
       hl: { sim: C.fix }, chains: [{ path: ['sim_iot'], color: C.data }], hold: 2600 },
   ]},
   concurrent: { name: 'Scenario 3 of 4 - Concurrent incidents', steps: [
@@ -230,7 +230,7 @@ const SCENARIOS = {
       hl: { sim: C.alarm, sfn: C.alarm, lambda: C.alarm }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.alarm }] },
     { cap: ['ACTION_FAILED, ALARM_RAISED, LOCKDOWN_ENGAGED and ESCALATED are logged.', 'The execution ends FAILED and the lock stays until a manual reset.'],
       hl: { sim: C.alarm, sfn: C.fault, log: C.log, cw: C.log }, chains: [{ path: ['sfn_log'], color: C.log }, { path: ['sfn_cw'], color: C.log }] },
-    { cap: ['20 runs: the full escalation path every time, never marked resolved.', 'Median 286 ms from ingest to alarm and lockdown, 1.8 s on a cold first call.'],
+    { cap: ['20 runs: the full escalation path every time, never marked resolved.', 'Warm median 285 ms from ingest to alarm and lockdown, 1.8 s on a cold first call.'],
       hl: { sim: C.alarm }, chains: [], hold: 2600 },
   ]},
 };

@@ -87,3 +87,16 @@ Real problems hit during the build: what happened, root cause, fix. Written as t
 - **What happened:** in 2 of the 20 concurrent runs, the two Step Functions executions did not overlap (-12 ms and -25 ms). The first estimate, from the incident log's DETECTED -> RESOLVED windows, said 3/20; the execution history (ExecutionStarted -> ExecutionSucceeded) is the accurate measure.
 - **Root cause:** the two sabotage commands are two separate MQTT publishes travelling from Nairobi; in those runs they arrived 146 ms and 156 ms apart, while a warm execution only lasts about 100-160 ms. The first was finished before the second started.
 - **Fix:** none in the system: each incident still had its own execution, its own lock, and exactly one incident, with no interference. Reported as measured: 18/20 runs overlapped, median overlap 85 ms.
+
+## Phase 6
+
+### "Warm" figures that were not warm-only
+
+- **What happened:** the Phase 5 summary and the first version of the diagram presented 445 ms (device clock) and 173 ms (AWS) as warm medians.
+- **Root cause:** those are the medians of all 40 single-sabotage runs, including the 2 first calls on a fresh Lambda container. The warm-only medians (38 runs) are 437 ms and 172 ms. The mistake was caught while recomputing the split for the README.
+- **Fix:** diagram, PNG and README now use the warm-only figures and report the 2 cold runs separately (1475 and 1538 ms device clock, 1205 and 1290 ms AWS side).
+
+### The README GIF is rendered by a headless browser, not a screen recording
+
+- **What happened:** the screen-recorded GIF predated the 437/172 correction (file dated 20:09, fix at 20:13) and still showed 445/173; a re-recording never reached the project folder.
+- **Fix:** `diagram/architecture.gif` is rendered from `diagram/index.html?record=1&scenario=sabotage` in headless Chromium (Playwright), frame by frame with real timings, and encoded with `gifenc` (tools kept outside the repo): 1200x729, 102 frames, 18.8 s, 6.9 MB, cropped above the legend line. It is a browser render of the diagram, not a screen recording.
