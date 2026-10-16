@@ -6,11 +6,18 @@
 
 ![Architecture Diagram](diagram/architecture.png)
 
-The animation below is an illustration, not a live counter: the timings it shows were measured during the Phase 5 tests on 15 October 2026, in us-east-1, with the devices simulated in Nairobi.
+**Flow:**
 
-![Animated Data Flow](diagram/architecture.gif)
-
-**Flow:** A simulated cooling unit in Nairobi publishes a reading every second to AWS IoT Core over MQTT, authenticated by its own X.509 certificate. When a saboteur overheats it, the next reading (92 °C) reaches IoT Core, where an IoT Rule (`temp_c > 80`) matches it at ingestion and starts a Step Functions Express workflow. The workflow takes a per-component lock in DynamoDB so repeated faulty readings do not open duplicate incidents, writes `DETECTED` to an append-only incident log, and invokes the `close_valve` Lambda, which publishes the fix command straight back to the device over IoT Core. The workflow then logs `REMEDIATED` and `RESOLVED` and releases the lock. If the valve reports that it did not close, the workflow takes the escalation path instead: it raises the plant alarm, engages lockdown, logs every step, and ends `FAILED`. A local React dashboard reads the live state and the log through API Gateway.
+1. The simulator, run locally in Nairobi, acts as three devices (cooling unit, power bus, alarm system). Each publishes one reading per second to AWS IoT Core over MQTT, authenticated by its own X.509 certificate, and receives its commands on the same connection.
+2. IoT Rules evaluate every reading as it arrives. A live-state rule mirrors the latest reading of each component into the DynamoDB state table.
+3. When a reading crosses a fault threshold (`temp_c > 80` for cooling, `load_pct > 100 OR voltage_v < 207` for power), its fault rule starts a Step Functions Express workflow.
+4. The workflow takes a conditional per-component lock in the state table, so repeated faulty readings do not open duplicate incidents, and writes `DETECTED`, `REMEDIATED` and `RESOLVED` to the append-only incident log through the direct DynamoDB integration.
+5. The workflow invokes the fix Lambda (`close_valve` or `reroute_power`). If the fix reports that it failed, the workflow escalates instead: it invokes `raise_alarm` and `lockdown`, logs every step, and ends `FAILED`.
+6. Each action Lambda publishes its command to the device's command topic in IoT Core, which delivers it to the device.
+7. Workflow executions and Lambda functions write their logs to CloudWatch Logs.
+8. A local React dashboard polls the HTTP API every second; the Vite dev server adds the API key server-side, so the key never reaches the browser.
+9. API Gateway routes `GET /state`, `POST /sabotage` and `POST /reset` to two Lambdas.
+10. The read Lambda returns the live state, the locks and the recent incident events from both tables. The command Lambda publishes sabotage and reset commands to the devices through IoT Core sets the failure-injection flag in the state table, and on reset clears the flags and the locks.
 
 ---
 
@@ -85,7 +92,7 @@ Built in one working day (15 October 2026), from an empty AWS account to 100 mea
 
 **9. Measurement.** 80 scripted runs from a clean state plus a 5-minute normal-operation window, with device-clock and AWS-clock figures kept separate.
 
-**10. Diagram and documentation.** A self-contained animated diagram using unmodified icons from the official AWS Architecture Icons package.
+**10. Diagram and documentation.** A static architecture diagram (`diagram/index.html`, rendered to PNG by `diagram/render.mjs`) using unmodified icons from the official AWS Architecture Icons package.
 
 ## Real Problems Hit and Fixed
 

@@ -2,321 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Chaos Room Architecture</title>
-<!--
-  Self-contained architecture diagram with animated data flow. No external dependencies:
-  open this file directly in a browser. AWS icons are unmodified files from the official
-  AWS Architecture Icons package (diagram/icons/).
-  Query parameters:
-    ?record=1            hide the controls (for screen recording)
-    ?scenario=sabotage   play one scenario in a loop (normal | sabotage | concurrent | escalation)
-    ?static=1            no animation (used to export architecture.png)
--->
+<title>Chaos Room Simulator - Architecture</title>
 <style>
-  :root {
-    --bg: #ffffff;
-    --ink: #0b1220;
-    --muted: #334155;
-    --line: #475569;
-    --card: #ffffff;
-    --card-border: #94a3b8;
-    --group: #64748b;
-  }
-  html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Segoe UI", Arial, Helvetica, sans-serif; }
-  .wrap { max-width: 1600px; margin: 0 auto; padding: 8px 16px 16px; }
-  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-  .controls button { font: 600 18px "Segoe UI", Arial, sans-serif; padding: 8px 14px; border: 2px solid var(--ink); background: #fff; color: var(--ink); border-radius: 8px; cursor: pointer; }
-  .controls button[aria-pressed="true"] { background: var(--ink); color: #fff; }
-  svg { width: 100%; height: auto; display: block; }
-  .hidden { display: none; }
+  :root { --ink: #232F3E; --orange: #ED7100; --region: #00A4A6; --grey: #7D8998; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; font-family: "Amazon Ember", "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+  #canvas { position: relative; width: 1800px; height: 1000px; background: #fff; overflow: hidden; }
+  .box { position: absolute; border: 2px solid; }
+  .box > .title { position: absolute; top: 6px; left: 10px; font-size: 19px; display: flex; align-items: center; gap: 8px; }
+  .box > .title img { width: 32px; height: 32px; }
+  .cloud { border-color: var(--ink); }
+  .cloud > .title { top: 0; left: 0; background: var(--ink); color: #fff; padding: 0 12px 0 0; height: 36px; }
+  .cloud > .title img { width: 36px; height: 36px; }
+  .account { border-color: var(--orange); }
+  .region { border: 2px dashed var(--region); }
+  .region > .title { color: #00777A; }
+  .local { border-color: var(--grey); }
+  .node { position: absolute; width: 200px; margin-left: -100px; text-align: center; }
+  .node img { width: 64px; height: 64px; display: block; margin: 0 auto; }
+  .node span { display: block; margin-top: 6px; font-size: 20px; line-height: 1.15; }
+  .step { position: absolute; width: 30px; height: 30px; border-radius: 50%; background: #000; color: #fff; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  svg { position: absolute; inset: 0; pointer-events: none; }
+  svg polyline { fill: none; stroke: #000; stroke-width: 1.6; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="controls" id="controls">
-    <button data-s="all" aria-pressed="true">Play all</button>
-    <button data-s="normal">Normal operation</button>
-    <button data-s="sabotage">Single sabotage</button>
-    <button data-s="concurrent">Concurrent incidents</button>
-    <button data-s="escalation">Fix fails, escalation</button>
-  </div>
+<div id="canvas">
 
-  <svg id="d" viewBox="0 0 1600 1010" role="img" aria-labelledby="t desc">
-    <title id="t">Chaos Room architecture</title>
-    <desc id="desc">Simulated devices publish telemetry to AWS IoT Core. IoT Rules detect faults at ingestion and start Step Functions Express workflows, which invoke Lambda actions that send the fix back to the device, and record every step in DynamoDB. A local dashboard reads the state through API Gateway.</desc>
+  <!-- Containers -->
+  <div class="box local" style="left:40px; top:170px; width:300px; height:740px;"><div class="title">Local machine (Nairobi)</div></div>
+  <div class="box cloud" style="left:380px; top:25px; width:1390px; height:950px;"><div class="title"><img src="icons/group-aws-cloud.svg" alt="">AWS Cloud</div></div>
+  <div class="box account" style="left:405px; top:75px; width:1340px; height:875px;"><div class="title">AWS account</div></div>
+  <div class="box region" style="left:430px; top:125px; width:1290px; height:800px;"><div class="title"><img src="icons/group-region.svg" alt="">us-east-1</div></div>
 
+  <!-- Nodes: top = center y - 32 -->
+  <div class="node" style="left:190px; top:268px;"><img src="icons/gear.svg" alt=""><span>Simulator<br>(3 devices)</span></div>
+  <div class="node" style="left:190px; top:768px;"><img src="icons/client.svg" alt=""><span>React dashboard</span></div>
+
+  <div class="node" style="left:590px; top:268px;"><img src="icons/Arch_AWS-IoT-Core_64.svg" alt=""><span>IoT Core (MQTT)</span></div>
+  <div class="node" style="left:900px; top:268px;"><img src="icons/Res_AWS-IoT-Rule_48.svg" alt=""><span>IoT Rules</span></div>
+  <div class="node" style="left:1210px; top:268px;"><img src="icons/Arch_AWS-Step-Functions_64.svg" alt=""><span>Express workflows</span></div>
+  <div class="node" style="left:1520px; top:268px; width:240px; margin-left:-120px;"><img src="icons/Arch_AWS-Lambda_64.svg" alt=""><span>Action Lambdas<br>(fix, alarm, lockdown)</span></div>
+
+  <div class="node" style="left:900px; top:528px;"><img src="icons/Arch_Amazon-DynamoDB_64.svg" alt=""><span>State table</span></div>
+  <div class="node" style="left:1210px; top:528px;"><img src="icons/Arch_Amazon-DynamoDB_64.svg" alt=""><span>Incident log</span></div>
+  <div class="node" style="left:1520px; top:528px;"><img src="icons/Arch_Amazon-CloudWatch_64.svg" alt=""><span>CloudWatch Logs</span></div>
+
+  <div class="node" style="left:590px; top:768px;"><img src="icons/Arch_Amazon-API-Gateway_64.svg" alt=""><span>HTTP API</span></div>
+  <div class="node" style="left:900px; top:768px;"><img src="icons/Arch_AWS-Lambda_64.svg" alt=""><span>API Lambdas</span></div>
+
+  <!-- Steps -->
+  <div class="step" style="left:122px; top:252px;">1</div>
+  <div class="step" style="left:832px; top:252px;">2</div>
+  <div class="step" style="left:1142px; top:252px;">3</div>
+  <div class="step" style="left:1142px; top:512px;">4</div>
+  <div class="step" style="left:1452px; top:252px;">5</div>
+  <div class="step" style="left:522px; top:252px;">6</div>
+  <div class="step" style="left:1452px; top:512px;">7</div>
+  <div class="step" style="left:122px; top:752px;">8</div>
+  <div class="step" style="left:522px; top:752px;">9</div>
+  <div class="step" style="left:938px; top:752px;">10</div>
+
+  <svg width="1800" height="1000" viewBox="0 0 1800 1000">
     <defs>
       <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-        <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+        <path d="M0,0 L10,5 L0,10 z" fill="#000"/>
       </marker>
     </defs>
-
-    <!-- Title -->
-    <text x="20" y="44" font-size="34" font-weight="700" fill="#0b1220">Chaos Room - detect and fix industrial faults automatically on AWS</text>
-    <text x="20" y="78" font-size="21" fill="#334155">Detection happens in AWS IoT Rules the moment a reading arrives. Remediation runs in Step Functions Express. Every step is recorded.</text>
-
-    <!-- Groups -->
-    <rect x="16" y="100" width="276" height="735" rx="10" fill="none" stroke="#64748b" stroke-width="2" stroke-dasharray="8 6"/>
-    <text x="32" y="130" font-size="20" font-weight="700" fill="#0b1220">Local (Nairobi)</text>
-    <rect x="308" y="100" width="1276" height="735" rx="10" fill="none" stroke="#64748b" stroke-width="2"/>
-    <text x="324" y="130" font-size="20" font-weight="700" fill="#0b1220">AWS Cloud - us-east-1</text>
-
-    <!-- Edges (drawn first, cards on top) -->
-    <g id="edges" fill="none" stroke="#475569" stroke-width="3" marker-end="url(#arrow)"></g>
-    <g id="edge-labels" font-size="17" fill="#0b1220" stroke="#ffffff" stroke-width="6" stroke-linejoin="round" paint-order="stroke"></g>
-
-    <!-- Cards -->
-    <g id="cards"></g>
-
-    <!-- Measured figures -->
-    <g id="metrics">
-      <rect x="940" y="630" width="630" height="192" rx="10" fill="#f8fafc" stroke="#0b1220" stroke-width="2"/>
-      <text x="960" y="664" font-size="22" font-weight="700" fill="#0b1220">Measured in Phase 5, warm Lambda (medians)</text>
-      <text x="960" y="700" font-size="21" fill="#0b1220">Fix received by the device: 437 ms</text>
-      <text x="960" y="734" font-size="21" fill="#0b1220">Inside AWS, ingest to fix sent: 172 ms</text>
-      <text x="960" y="768" font-size="21" fill="#0b1220">Cold first call, new container: about 1.5 s</text>
-      <text x="960" y="802" font-size="21" fill="#0b1220">Escalation to alarm and lockdown: 285 ms</text>
-    </g>
-
-    <!-- Dots layer -->
-    <g id="dots"></g>
-
-    <!-- Caption -->
-    <rect x="16" y="850" width="1568" height="118" rx="10" fill="#0b1220"/>
-    <text id="cap-title" x="36" y="886" font-size="22" font-weight="700" fill="#facc15"></text>
-    <text id="cap-1" x="36" y="920" font-size="27" fill="#ffffff"></text>
-    <text id="cap-2" x="36" y="954" font-size="27" fill="#ffffff"></text>
-
-    <!-- Legend: required disclaimer -->
-    <text x="20" y="998" font-size="19" fill="#0b1220">Animated illustration, not a live counter. Timings are the Phase 5 measurements (15 Oct 2026, us-east-1, devices in Nairobi).</text>
+    <!-- 1 telemetry up, commands down, over MQTT -->
+    <polyline points="226,300 554,300" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <!-- 2 IoT Core to the rules; live-state rule to the state table -->
+    <polyline points="626,300 864,300" marker-end="url(#arrow)"/>
+    <polyline points="900,372 900,524" marker-end="url(#arrow)"/>
+    <!-- 3 fault rule starts the Express workflow -->
+    <polyline points="936,300 1174,300" marker-end="url(#arrow)"/>
+    <!-- 4 workflow writes the incident log and takes the lock in the state table -->
+    <polyline points="1210,372 1210,524" marker-end="url(#arrow)"/>
+    <polyline points="1210,440 1050,440 1050,560 936,560" marker-end="url(#arrow)"/>
+    <circle cx="1210" cy="440" r="4" fill="#000"/>
+    <!-- 5 workflow invokes the action Lambdas -->
+    <polyline points="1246,300 1484,300" marker-end="url(#arrow)"/>
+    <!-- 6 action Lambdas publish the command back through IoT Core -->
+    <polyline points="1520,264 1520,195 590,195 590,264" marker-end="url(#arrow)"/>
+    <!-- 7 workflow and Lambda logs -->
+    <polyline points="1520,396 1520,524" marker-end="url(#arrow)"/>
+    <polyline points="1210,440 1380,440 1380,560 1484,560" marker-end="url(#arrow)"/>
+    <!-- 8 dashboard polls the HTTP API -->
+    <polyline points="226,810 554,810" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <!-- 9 HTTP API to the API Lambdas -->
+    <polyline points="626,810 864,810" marker-end="url(#arrow)"/>
+    <!-- 10 API Lambdas read and reset the state table, read the incident log, publish sabotage commands -->
+    <polyline points="900,632 900,764" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <polyline points="1210,632 1210,800 936,800" marker-end="url(#arrow)"/>
+    <polyline points="864,780 750,780 750,330 626,330" marker-end="url(#arrow)"/>
   </svg>
 </div>
-
-<script>
-// ---------------------------------------------------------------------------
-// Layout
-// ---------------------------------------------------------------------------
-const W = 210, H = 150;            // card size
-const CARDS = {
-  sim:     { x: 154,  y: 300, title: 'Device simulator', sub: ['3 registered IoT things', 'MQTT over mTLS'], glyph: 'devices' },
-  browser: { x: 154,  y: 720, title: 'Dashboard', sub: ['React, local', 'polls every 1 s'], glyph: 'browser' },
-  iot:     { x: 480,  y: 300, title: 'AWS IoT Core', sub: ['MQTT broker', 'X.509 per device'], icon: 'icons/Arch_AWS-IoT-Core_64.svg' },
-  rule:    { x: 760,  y: 300, title: 'IoT Rules', sub: ['detect at ingestion', 'e.g. temp_c > 80'], icon: 'icons/Res_AWS-IoT-Rule_48.svg' },
-  sfn:     { x: 1040, y: 300, title: 'Step Functions', sub: ['Express workflow', 'one per fault type'], icon: 'icons/Arch_AWS-Step-Functions_64.svg' },
-  lambda:  { x: 1320, y: 300, title: 'Lambda actions', sub: ['4 functions', 'fix, alarm, lockdown'], icon: 'icons/Arch_AWS-Lambda_64.svg' },
-  state:   { x: 760,  y: 500, title: 'DynamoDB state', sub: ['component locks', 'latest readings'], icon: 'icons/Res_Amazon-DynamoDB_Table_48.svg' },
-  log:     { x: 1040, y: 500, title: 'Incident log', sub: ['DynamoDB', 'append-only audit trail'], icon: 'icons/Arch_Amazon-DynamoDB_64.svg' },
-  cw:      { x: 1320, y: 500, title: 'CloudWatch', sub: ['execution history', 'Lambda logs'], icon: 'icons/Arch_Amazon-CloudWatch_64.svg' },
-  apigw:   { x: 480,  y: 720, title: 'API Gateway', sub: ['HTTP API', 'API key required'], icon: 'icons/Arch_Amazon-API-Gateway_64.svg' },
-  apil:    { x: 760,  y: 720, title: 'Lambda API', sub: ['read state', 'send sabotage / reset'], icon: 'icons/Arch_AWS-Lambda_64.svg' },
-};
-
-// Edge paths between card borders. label: [text, x, y, anchor]
-const EDGES = {
-  sim_iot:      { d: 'M259 282 H375', label: ['telemetry', 317, 272, 'middle'] },
-  iot_sim:      { d: 'M375 320 H259', label: ['commands', 317, 344, 'middle'] },
-  iot_rule:     { d: 'M585 300 H655' },
-  rule_sfn:     { d: 'M865 300 H935', label: ['start', 900, 290, 'middle'] },
-  sfn_lambda:   { d: 'M1145 286 H1215', label: ['invoke', 1180, 276, 'middle'] },
-  lambda_sfn:   { d: 'M1215 318 H1145' },
-  lambda_iot:   { d: 'M1320 225 V168 H480 V225', label: ['fix command published to the device', 900, 160, 'middle'] },
-  rule_state:   { d: 'M760 375 V425', label: ['latest reading', 770, 406, 'start'] },
-  sfn_state:    { d: 'M990 375 L866 452', label: ['lock', 876, 470, 'start'] },
-  sfn_log:      { d: 'M1040 375 V425', label: ['every step', 1050, 406, 'start'] },
-  sfn_cw:       { d: 'M1100 375 L1255 425', label: ['history', 1152, 438, 'start'] },
-  browser_apigw:{ d: 'M259 720 H375', label: ['HTTPS', 317, 710, 'middle'] },
-  apigw_apil:   { d: 'M585 720 H655' },
-  apil_state:   { d: 'M760 645 V575', label: ['read', 770, 616, 'start'] },
-  apil_log:     { d: 'M830 645 L975 575' },
-  apil_iot:     { d: 'M690 645 V612 H612 V340 H585', label: ['sabotage', 602, 480, 'middle', -90] },
-};
-
-// ---------------------------------------------------------------------------
-// Rendering
-// ---------------------------------------------------------------------------
-const NS = 'http://www.w3.org/2000/svg';
-const el = (tag, attrs, parent, text) => {
-  const e = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  if (text != null) e.textContent = text;
-  if (parent) parent.appendChild(e);
-  return e;
-};
-
-const edgeEls = {};
-for (const [id, e] of Object.entries(EDGES)) {
-  edgeEls[id] = el('path', { d: e.d, id: `edge-${id}` }, document.getElementById('edges'));
-  if (e.label) {
-    const [t, x, y, anchor, rot] = e.label;
-    const attrs = { x, y, 'text-anchor': anchor, 'font-weight': 600 };
-    if (rot) attrs.transform = `rotate(${rot} ${x} ${y})`;
-    el('text', attrs, document.getElementById('edge-labels'), t);
-  }
-}
-
-const cardEls = {};
-for (const [id, c] of Object.entries(CARDS)) {
-  const g = el('g', { id: `card-${id}` }, document.getElementById('cards'));
-  const x0 = c.x - W / 2, y0 = c.y - H / 2;
-  cardEls[id] = el('rect', { x: x0, y: y0, width: W, height: H, rx: 10, fill: '#ffffff', stroke: '#94a3b8', 'stroke-width': 2 }, g);
-  if (c.icon) {
-    el('image', { href: c.icon, x: c.x - 24, y: y0 + 10, width: 48, height: 48 }, g);
-  } else if (c.glyph === 'devices') {
-    // Neutral drawing: a box holding three devices (not an AWS icon)
-    el('rect', { x: c.x - 40, y: y0 + 12, width: 80, height: 44, rx: 6, fill: 'none', stroke: '#334155', 'stroke-width': 3 }, g);
-    for (let i = 0; i < 3; i++) el('rect', { x: c.x - 31 + i * 22, y: y0 + 22, width: 16, height: 24, rx: 3, fill: '#334155' }, g);
-  } else if (c.glyph === 'browser') {
-    // Neutral drawing: a browser window (not an AWS icon)
-    el('rect', { x: c.x - 40, y: y0 + 12, width: 80, height: 46, rx: 5, fill: 'none', stroke: '#334155', 'stroke-width': 3 }, g);
-    el('line', { x1: c.x - 40, y1: y0 + 24, x2: c.x + 40, y2: y0 + 24, stroke: '#334155', 'stroke-width': 3 }, g);
-    for (let i = 0; i < 3; i++) el('circle', { cx: c.x - 32 + i * 8, cy: y0 + 18, r: 2.5, fill: '#334155' }, g);
-  }
-  el('text', { x: c.x, y: y0 + 86, 'text-anchor': 'middle', 'font-size': 21, 'font-weight': 700, fill: '#0b1220' }, g, c.title);
-  c.sub.forEach((s, i) => el('text', { x: c.x, y: y0 + 112 + i * 22, 'text-anchor': 'middle', 'font-size': 17, fill: '#334155' }, g, s));
-}
-
-// ---------------------------------------------------------------------------
-// Scenarios. Each step: caption lines, card highlights, and chains of edges run in parallel.
-// A chain is { path: [edge ids], color, delay }.
-// ---------------------------------------------------------------------------
-const C = { data: '#1d4ed8', fault: '#dc2626', fix: '#15803d', log: '#7e22ce', cmd: '#c2410c', alarm: '#b45309' };
-
-const SCENARIOS = {
-  normal: { name: 'Scenario 1 of 4 - Normal operation', steps: [
-    { cap: ['Each device publishes one reading per second over MQTT,', 'authenticated by its own X.509 certificate.'],
-      hl: { sim: C.data, iot: C.data }, chains: [0, 300, 600].map((delay) => ({ path: ['sim_iot'], color: C.data, delay })) },
-    { cap: ['A rule mirrors the latest reading into DynamoDB for the dashboard.', 'Nothing is out of range, so no workflow runs.'],
-      hl: { rule: C.data, state: C.data }, chains: [{ path: ['iot_rule', 'rule_state'], color: C.data }] },
-    { cap: ['The dashboard polls the API every second to show the live state.', 'Measured: 180 messages per minute, 0 incidents in 5 minutes.'],
-      hl: { browser: C.data, apigw: C.data, apil: C.data, state: C.data }, chains: [{ path: ['browser_apigw', 'apigw_apil', 'apil_state'], color: C.data }] },
-  ]},
-  sabotage: { name: 'Scenario 2 of 4 - Single sabotage', steps: [
-    { cap: ['Sabotage clicked: the API Lambda publishes a sabotage command', 'to the cooling unit.'],
-      hl: { browser: C.cmd, apigw: C.cmd, apil: C.cmd }, chains: [{ path: ['browser_apigw', 'apigw_apil', 'apil_iot', 'iot_sim'], color: C.cmd }] },
-    { cap: ['The cooling unit publishes a faulty reading: 92 °C.', 'The reading itself carries no fault flag.'],
-      hl: { sim: C.fault }, chains: [{ path: ['sim_iot'], color: C.fault }] },
-    { cap: ['An IoT rule matches temp_c > 80 the moment the reading arrives', 'and starts an Express workflow.'],
-      hl: { sim: C.fault, rule: C.fault, sfn: C.fault }, chains: [{ path: ['iot_rule', 'rule_sfn'], color: C.fault }] },
-    { cap: ['The workflow takes the component lock (one incident per fault)', 'and writes DETECTED to the append-only incident log.'],
-      hl: { sim: C.fault, sfn: C.log, state: C.log, log: C.log }, chains: [{ path: ['sfn_state'], color: C.log }, { path: ['sfn_log'], color: C.log }] },
-    { cap: ['It invokes close_valve, which publishes the fix command', 'straight back to the device.'],
-      hl: { sim: C.fault, sfn: C.fix, lambda: C.fix, iot: C.fix }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.fix }] },
-    { cap: ['REMEDIATED and RESOLVED are logged, the lock is released,', 'and the execution history is kept in CloudWatch.'],
-      hl: { sim: C.fix, sfn: C.log, log: C.log, state: C.log, cw: C.log }, chains: [{ path: ['sfn_log'], color: C.log }, { path: ['sfn_state'], color: C.log }, { path: ['sfn_cw'], color: C.log }] },
-    { cap: ['Fixed. Warm median: 437 ms from faulty reading to fix received on the device,', '172 ms inside AWS. A first call on a new Lambda container took about 1.5 s.'],
-      hl: { sim: C.fix }, chains: [{ path: ['sim_iot'], color: C.data }], hold: 2600 },
-  ]},
-  concurrent: { name: 'Scenario 3 of 4 - Concurrent incidents', steps: [
-    { cap: ['Cooling and power are sabotaged at the same time.', ''],
-      hl: { browser: C.cmd, apigw: C.cmd, apil: C.cmd }, chains: [{ path: ['browser_apigw', 'apigw_apil', 'apil_iot', 'iot_sim'], color: C.cmd }] },
-    { cap: ['Two faulty readings, two rule matches,', 'two independent Express executions.'],
-      hl: { sim: C.fault, rule: C.fault, sfn: C.fault }, chains: [{ path: ['sim_iot', 'iot_rule', 'rule_sfn'], color: C.fault }, { path: ['sim_iot', 'iot_rule', 'rule_sfn'], color: C.fault, delay: 220 }] },
-    { cap: ['Each execution locks only its own component', 'and runs its own action: close_valve and reroute_power.'],
-      hl: { sim: C.fault, sfn: C.fix, lambda: C.fix }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.fix }, { path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.fix, delay: 220 }] },
-    { cap: ['20 runs, 40 incidents: all fixed under one second, exactly one incident each.', 'The two executions overlapped in time in 18 of 20 runs (median 85 ms).'],
-      hl: { sim: C.fix, log: C.log }, chains: [{ path: ['sfn_log'], color: C.log }, { path: ['sfn_log'], color: C.log, delay: 220 }], hold: 2600 },
-  ]},
-  escalation: { name: 'Scenario 4 of 4 - The fix fails, escalation', steps: [
-    { cap: ['Sabotage with a jammed fix: the valve will report that it did not close.', ''],
-      hl: { browser: C.cmd, apigw: C.cmd, apil: C.cmd }, chains: [{ path: ['browser_apigw', 'apigw_apil', 'apil_iot', 'iot_sim'], color: C.cmd }] },
-    { cap: ['Faulty reading, rule match, Express workflow, lock and DETECTED,', 'exactly as before.'],
-      hl: { sim: C.fault, rule: C.fault, sfn: C.fault, log: C.log }, chains: [{ path: ['sim_iot', 'iot_rule', 'rule_sfn', 'sfn_log'], color: C.fault }] },
-    { cap: ['close_valve reports "valve still open".', 'The workflow does not report success: it switches to the escalation path.'],
-      hl: { sim: C.fault, sfn: C.fault, lambda: C.fault }, chains: [{ path: ['sfn_lambda', 'lambda_sfn'], color: C.fault }] },
-    { cap: ['raise_alarm sounds the plant alarm.', ''],
-      hl: { sim: C.alarm, sfn: C.alarm, lambda: C.alarm }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.alarm }] },
-    { cap: ['lockdown engages the plant lockdown.', ''],
-      hl: { sim: C.alarm, sfn: C.alarm, lambda: C.alarm }, chains: [{ path: ['sfn_lambda', 'lambda_iot', 'iot_sim'], color: C.alarm }] },
-    { cap: ['ACTION_FAILED, ALARM_RAISED, LOCKDOWN_ENGAGED and ESCALATED are logged.', 'The execution ends FAILED and the lock stays until a manual reset.'],
-      hl: { sim: C.alarm, sfn: C.fault, log: C.log, cw: C.log }, chains: [{ path: ['sfn_log'], color: C.log }, { path: ['sfn_cw'], color: C.log }] },
-    { cap: ['20 runs: the full escalation path every time, never marked resolved.', 'Warm median 285 ms from ingest to alarm and lockdown, 1.8 s on a cold first call.'],
-      hl: { sim: C.alarm }, chains: [], hold: 2600 },
-  ]},
-};
-const ORDER = ['normal', 'sabotage', 'concurrent', 'escalation'];
-
-// ---------------------------------------------------------------------------
-// Player
-// ---------------------------------------------------------------------------
-const EDGE_MS = 650, STEP_HOLD = 1300;
-const dots = document.getElementById('dots');
-let token = 0;
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function caption(title, lines) {
-  document.getElementById('cap-title').textContent = title;
-  document.getElementById('cap-1').textContent = lines[0] ?? '';
-  document.getElementById('cap-2').textContent = lines[1] ?? '';
-}
-
-function highlight(hl) {
-  for (const [id, r] of Object.entries(cardEls)) {
-    r.setAttribute('stroke', hl[id] ?? '#94a3b8');
-    r.setAttribute('stroke-width', hl[id] ? 5 : 2);
-  }
-}
-
-function moveDot(edgeId, color, my) {
-  const path = edgeEls[edgeId];
-  const len = path.getTotalLength();
-  const dot = el('circle', { r: 11, fill: color, stroke: '#ffffff', 'stroke-width': 3 }, dots);
-  return new Promise((resolve) => {
-    const t0 = performance.now();
-    const frame = (now) => {
-      if (my !== token) { dot.remove(); return resolve(); }
-      const t = Math.min(1, (now - t0) / EDGE_MS);
-      const p = path.getPointAtLength(t * len);
-      dot.setAttribute('cx', p.x);
-      dot.setAttribute('cy', p.y);
-      if (t < 1) requestAnimationFrame(frame);
-      else { dot.remove(); resolve(); }
-    };
-    requestAnimationFrame(frame);
-  });
-}
-
-async function runChain(chain, my) {
-  if (chain.delay) await sleep(chain.delay);
-  for (const e of chain.path) {
-    if (my !== token) return;
-    await moveDot(e, chain.color, my);
-  }
-}
-
-async function play(names, loop) {
-  const my = ++token;
-  do {
-    for (const n of names) {
-      const s = SCENARIOS[n];
-      for (const step of s.steps) {
-        if (my !== token) return;
-        caption(s.name, step.cap);
-        highlight(step.hl);
-        await Promise.all(step.chains.map((c) => runChain(c, my)));
-        await sleep(step.hold ?? STEP_HOLD);
-      }
-    }
-  } while (loop && my === token);
-}
-
-const params = new URLSearchParams(location.search);
-if (params.get('record')) document.getElementById('controls').classList.add('hidden');
-
-if (params.get('static')) {
-  document.getElementById('controls').classList.add('hidden');
-  caption('How it works', ['Devices publish telemetry. A rule detects the fault, an Express workflow runs the fix', 'and sends it back to the device, and every step is written to the audit log.']);
-  highlight({});
-} else {
-  const only = params.get('scenario');
-  const buttons = [...document.querySelectorAll('#controls button')];
-  const start = (s) => {
-    buttons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === s)));
-    play(s === 'all' ? ORDER : [s], true);
-  };
-  buttons.forEach((b) => b.addEventListener('click', () => start(b.dataset.s)));
-  start(only && SCENARIOS[only] ? only : 'all');
-}
-</script>
 </body>
 </html>
