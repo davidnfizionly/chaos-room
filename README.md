@@ -53,7 +53,7 @@ A simulated control room (a cooling unit, a power bus, an alarm system) whose fa
 - **An append-only audit trail**: no principal in the stack can update or delete an incident log entry
 - **Concurrent incidents**: two simultaneous faults run as two independent executions
 
-Built in one working day (15 October 2026), from an empty AWS account to 100 measured incidents, then torn down the same day: all 74 resources destroyed and the account checked empty (see Cleanup).
+From an empty AWS account to 100 measured incidents, then torn down on 15 October 2026: all 74 resources destroyed and the account checked empty (see Cleanup).
 
 ## Tech Stack
 
@@ -235,7 +235,7 @@ The same page showed "0/1 email verified": the alert e-mail subscription was nev
 
 Every resource that supports tags carried `Project=chaos-room` through the Terraform provider's default tags (`proof/03-budget-and-state-bucket-verification.txt`). IoT things and certificates cannot be tagged, so the teardown check lists them by name.
 
-On 15 October 2026, the day of the build, the main stack (67 resources) and then the bootstrap stack (7 resources) were destroyed, and every check came back empty:
+On 15 October 2026, the main stack (67 resources) and then the bootstrap stack (7 resources) were destroyed, and every check came back empty:
 
 ```bash
 aws resourcegroupstaggingapi get-resources --tag-filters Key=Project,Values=chaos-room
